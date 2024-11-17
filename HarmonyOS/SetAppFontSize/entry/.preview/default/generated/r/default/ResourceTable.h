@@ -1,0 +1,86 @@
+/*
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef RESOURCE_TABLE_H
+#define RESOURCE_TABLE_H
+
+#include<stdint.h>
+
+namespace OHOS {
+const int32_t STRING_ENTRY_ABILITY_DESC = 0x01000008;
+const int32_t STRING_ENTRY_ABILITY_LABEL = 0x01000009;
+const int32_t STRING_APP_NAME = 0x01000000;
+const int32_t STRING_EMPTY = 0x0100000a;
+const int32_t STRING_HOME_APP_MANAGEMENT = 0x0100000b;
+const int32_t STRING_HOME_DISPLAY_AND_BRIGHTNESS = 0x0100000c;
+const int32_t STRING_HOME_PRIVACY = 0x0100000d;
+const int32_t STRING_HOME_SETTING_THE_FONT_SIZE = 0x0100000e;
+const int32_t STRING_HOME_STORAGE = 0x0100000f;
+const int32_t STRING_HOME_TITLE = 0x01000010;
+const int32_t STRING_HOME_VOICE = 0x01000011;
+const int32_t STRING_MODULE_DESC = 0x01000012;
+const int32_t STRING_SET_CHAR_A = 0x01000013;
+const int32_t STRING_SET_CHAT_CONTENT1 = 0x01000014;
+const int32_t STRING_SET_CHAT_CONTENT2 = 0x01000015;
+const int32_t STRING_SET_CHAT_CONTENT3 = 0x01000016;
+const int32_t STRING_SET_CHAT_CONTENT4 = 0x01000017;
+const int32_t STRING_SET_FONT_SIZE = 0x01000018;
+const int32_t STRING_SET_SIZE_EXTRA_LARGE = 0x01000019;
+const int32_t STRING_SET_SIZE_HUGE = 0x0100001a;
+const int32_t STRING_SET_SIZE_LARGE = 0x0100001b;
+const int32_t STRING_SET_SIZE_NORMAL = 0x0100001c;
+const int32_t STRING_SET_SIZE_SMALL = 0x0100001d;
+const int32_t STRING_SET_TITLE = 0x0100001e;
+const int32_t COLOR_SET_CHAT_LEFT_BG = 0x01000002;
+const int32_t COLOR_SET_CHAT_RIGHT_BG = 0x01000003;
+const int32_t COLOR_SETTING_ITEM_DIVIDER = 0x01000004;
+const int32_t COLOR_TEXT = 0x01000005;
+const int32_t COLOR_WHITE = 0x01000006;
+const int32_t FLOAT_A_LEFT_PADDING = 0x01000020;
+const int32_t FLOAT_A_RIGHT_PADDING = 0x01000021;
+const int32_t FLOAT_BLOCK_BACKGROUND_RADIUS = 0x01000022;
+const int32_t FLOAT_BLOCK_VERTICAL_PADDING = 0x01000023;
+const int32_t FLOAT_SET_BIG_A = 0x01000024;
+const int32_t FLOAT_SET_CHAT_CONTENT_BG_RADIUS = 0x01000025;
+const int32_t FLOAT_SET_CHAT_CONTENT_HORIZONTAL_PADDING = 0x01000026;
+const int32_t FLOAT_SET_CHAT_CONTENT_VERTICAL_PADDING = 0x01000027;
+const int32_t FLOAT_SET_SMALL_A = 0x01000028;
+const int32_t FLOAT_SET_TEXT = 0x01000029;
+const int32_t FLOAT_SETTING_IC_MARGIN_LEFT = 0x0100002a;
+const int32_t FLOAT_SETTING_IC_MARGIN_RIGHT = 0x0100002b;
+const int32_t FLOAT_SETTING_ITEM_DIVIDER_START_MARGIN = 0x0100002c;
+const int32_t FLOAT_SETTING_ITEM_DIVIDER_WIDTH = 0x0100002d;
+const int32_t FLOAT_SETTING_ITEM_HEIGHT = 0x0100002e;
+const int32_t FLOAT_SETTING_ITEM_IC_SIZE = 0x0100002f;
+const int32_t FLOAT_SLIDER_BOTTOM_PADDING = 0x01000030;
+const int32_t FLOAT_SLIDER_TOP_PADDING = 0x01000031;
+const int32_t FLOAT_TITLE_IC_MARGIN = 0x01000032;
+const int32_t FLOAT_TITLE_IC_SIZE = 0x01000033;
+const int32_t FLOAT_TITLE_PADDING_LEFT = 0x01000034;
+const int32_t FLOAT_TITLE_TEXT_MARGIN_LEFT = 0x01000035;
+const int32_t MEDIA_APP_ICON = 0x01000001;
+const int32_t MEDIA_IC_APP_MANAGEMENT = 0x01000038;
+const int32_t MEDIA_IC_DISPLAY_AND_BRIGHTNESS = 0x01000007;
+const int32_t MEDIA_IC_PRIVACY = 0x0100003d;
+const int32_t MEDIA_IC_PUBLIC_BACK = 0x0100003e;
+const int32_t MEDIA_IC_SETTING_THE_FONT_SIZE = 0x01000037;
+const int32_t MEDIA_IC_STORAGE = 0x0100003a;
+const int32_t MEDIA_IC_VOICE = 0x0100001f;
+const int32_t MEDIA_ICON = 0x01000039;
+const int32_t MEDIA_LEFT_HEAD = 0x01000036;
+const int32_t MEDIA_RIGHT_HEAD = 0x0100003b;
+const int32_t PROFILE_MAIN_PAGES = 0x0100003c;
+}
+#endif

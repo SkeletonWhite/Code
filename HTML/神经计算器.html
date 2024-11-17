@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.staticfile.net/twitter-bootstrap/5.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.staticfile.net/twitter-bootstrap/5.1.1/js/bootstrap.bundle.min.js"></script>
+    <title>性别计算器</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            /* 标准盒子 */
+            box-sizing: border-box;
+        }
+
+        .container {
+            height: 100vh;
+            width: 100vw;
+            padding: 0;
+        }
+
+        #title {
+            height: 10%;
+            width: 100%;
+            background-color: blue;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #titleText {
+            display: block;
+            color: white;
+            font-weight: bolder;
+            letter-spacing: 1vw;
+            margin: 0;
+        }
+
+        #content {
+            width: 100%;
+            height: 60%;
+        }
+
+        #content form {
+            width: 80%;
+            margin: 10% auto 40% auto;
+        }
+
+        #relationship {
+            text-align: center;
+            margin-bottom: 5%;
+        }
+
+        #culc {
+            margin-right: 41%;
+        }
+
+        .container.mt-3 {
+            visibility: hidden;
+        }
+
+        .progress {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="title">
+            <p id="titleText">性别计算器</p>
+        </div>
+
+        <div id="content">
+            <form>
+                <label for="relationship" class="form-label">检测对象：</label>
+                <input class="form-control" list="relationships" name="relationship" id="relationship">
+                <datalist id="relationships">
+                    <option value="爷爷">
+                    <option value="奶奶">
+                    <option value="爸爸">
+                    <option value="妈妈">
+                    <option value="哥哥">
+                    <option value="姐姐">
+                    <option value="弟弟">
+                    <option value="妹妹">
+                </datalist>
+                <button class="btn btn-primary mt-3" id="culc" onclick="Culc()">开始计算</button>
+                <button type="reset" class="btn btn-primary mt-3" id="reset">&nbsp&nbsp&nbsp重置&nbsp&nbsp&nbsp</button>
+            </form>
+
+            <div class="container mt-3" id="Bar">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:0"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        function Culc(params) {
+            let Bar = document.getElementById("Bar");
+            Bar.style.visibility = "visible";
+        }
+    </script>
+</body>
+</html>
