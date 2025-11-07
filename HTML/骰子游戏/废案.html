@@ -1009,17 +1009,14 @@
 
     // 投掷骰子 - 使用3D变换动画
     function rollDice() {
-      // 重置游戏状态，确保总是可以投掷
-      gameState.isRolling = false;
+      // 检查是否正在投掷中
+      if (gameState.isRolling) return;
       
-      // 立即设置为true以防止重复点击
+      // 设置为true以防止重复点击
       gameState.isRolling = true;
-
-      // 隐藏投掷按钮
-      elements.rollBtn.style.display = 'none';
       
       // 禁用商店区域
-      const shopSection = document.querySelector('.w-full.md\:w-80.bg-white.rounded-2xl.p-4.shadow-xl');
+      const shopSection = document.querySelector('.w-full.md\\:w-80.bg-white.rounded-2xl.p-4.shadow-xl');
       if (shopSection) {
         shopSection.classList.add('opacity-50', 'pointer-events-none');
         shopSection.setAttribute('disabled', 'true');
@@ -1225,11 +1222,14 @@
     function isStraight(sortedPoints) {
       if (sortedPoints.length < 5) return false;
       
+      // 创建唯一值的数组，移除重复点
+      const uniquePoints = [...new Set(sortedPoints)].sort((a, b) => a - b);
+      
       // 检查是否有5个连续的数字
-      for (let i = 0; i <= sortedPoints.length - 5; i++) {
+      for (let i = 0; i <= uniquePoints.length - 5; i++) {
         let isStraight = true;
         for (let j = 0; j < 4; j++) {
-          if (sortedPoints[i + j + 1] !== sortedPoints[i + j] + 1) {
+          if (uniquePoints[i + j + 1] !== uniquePoints[i + j] + 1) {
             isStraight = false;
             break;
           }
@@ -1306,10 +1306,11 @@
       
       resultHTML += '</div>';
       
-      // 显示得分
+      // 显示得分 - 直接使用calculateScore函数中的计算方式
       const points = gameState.currentDice.map(dice => dice.point);
       const colors = gameState.currentDice.map(dice => dice.color);
       
+      // 计算基础得分（1和6）
       let baseScore = 0;
       points.forEach(point => {
         if (point === 1 || point === 6) {
@@ -1324,6 +1325,7 @@
       let specialText = '';
       
       if (gameState.diceCount >= 2) {
+        // 计算特殊得分
         specialScore = calculateSpecialScore(points, colors);
         const multiplier = gameState.upgrades.specialMultiplier.baseValue + 
                           gameState.upgrades.specialMultiplier.level * 
