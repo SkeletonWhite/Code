@@ -255,6 +255,11 @@
                 <i class="fa fa-chevron-down text-neon-blue"></i>
             </div>
         </div>
+        
+        <!-- 骰子游戏跳转按钮 (默认隐藏) -->
+        <a id="dice-game-button" href="./HTML/骰子游戏/骰子冒险 V1.0.004.html" class="hidden mt-16 px-6 py-3 bg-neon-purple/20 text-neon-purple rounded-lg border border-neon-purple/50 hover:bg-neon-purple/30 transition-all hover:scale-105 transform hover:-translate-y-1 border-glow-purple">
+            <i class="fa fa-gamepad mr-2"></i>开始骰子冒险游戏
+        </a>
     </div>
 
     <script>
@@ -278,6 +283,9 @@
             toggleCard();
         });
         
+        // 获取骰子游戏按钮
+        const diceGameButton = document.getElementById('dice-game-button');
+        
         function toggleCard() {
             isCollapsed = !isCollapsed;
             
@@ -287,12 +295,18 @@
                 cardContent.style.opacity = '0';
                 setTimeout(() => {
                     expandHandle.classList.add('handle-visible');
+                    // 显示骰子游戏按钮
+                    diceGameButton.classList.remove('hidden');
+                    diceGameButton.classList.add('flex', 'items-center', 'justify-center');
                 }, 300);
                 
                 // 添加粒子爆炸效果
                 createParticles(event.clientX, event.clientY, 30);
             } else {
                 expandHandle.classList.remove('handle-visible');
+                // 隐藏骰子游戏按钮
+                diceGameButton.classList.add('hidden');
+                diceGameButton.classList.remove('flex', 'items-center', 'justify-center');
                 profileCard.classList.remove('card-collapsed');
                 lightBar.classList.remove('light-bar-collapsed');
                 setTimeout(() => {
