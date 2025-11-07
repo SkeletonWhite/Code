@@ -137,7 +137,7 @@ struct SplashPage {
     }
   }
 
-  LoadingResource(): void {
+   LoadingResource(): void {
     // Wait 1s for dependent resource initialization to complete.
     this.userModel.checkIsLogged().then((logged: boolean) => {
       AppStorage.setOrCreate('getHomeResource', true);

@@ -1,4 +1,4 @@
-set(CMAKE_C_COMPILER "E:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/clang.exe")
+set(CMAKE_C_COMPILER "D:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/clang.exe")
 set(CMAKE_C_COMPILER_ARG1 "")
 set(CMAKE_C_COMPILER_ID "Clang")
 set(CMAKE_C_COMPILER_VERSION "15.0.4")
@@ -21,11 +21,11 @@ set(CMAKE_C_SIMULATE_VERSION "")
 
 
 
-set(CMAKE_AR "E:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/llvm-ar.exe")
-set(CMAKE_C_COMPILER_AR "E:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/llvm-ar.exe")
-set(CMAKE_RANLIB "E:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/llvm-ranlib.exe")
-set(CMAKE_C_COMPILER_RANLIB "E:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/llvm-ranlib.exe")
-set(CMAKE_LINKER "E:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/ld.lld.exe")
+set(CMAKE_AR "D:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/llvm-ar.exe")
+set(CMAKE_C_COMPILER_AR "D:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/llvm-ar.exe")
+set(CMAKE_RANLIB "D:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/llvm-ranlib.exe")
+set(CMAKE_C_COMPILER_RANLIB "D:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/llvm-ranlib.exe")
+set(CMAKE_LINKER "D:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/ld.lld.exe")
 set(CMAKE_MT "")
 set(CMAKE_TAPI "CMAKE_TAPI-NOTFOUND")
 set(CMAKE_COMPILER_IS_GNUCC )
@@ -68,7 +68,7 @@ endif()
 
 
 
-set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "E:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/lib/clang/15.0.4/include;E:/Study/DevEco Studio/sdk/default/openharmony/native/sysroot/usr/include/x86_64-linux-ohos;E:/Study/DevEco Studio/sdk/default/openharmony/native/sysroot/usr/include")
+set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "D:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/lib/clang/15.0.4/include;D:/Study/DevEco Studio/sdk/default/openharmony/native/sysroot/usr/include/x86_64-linux-ohos;D:/Study/DevEco Studio/sdk/default/openharmony/native/sysroot/usr/include")
 set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "unwind;-l:libunwind.a;c;-l:libunwind.a")
-set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "E:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/lib/clang/15.0.4/lib/x86_64-linux-ohos;E:/Study/DevEco Studio/sdk/default/openharmony/native/sysroot/usr/lib;E:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/lib/x86_64-linux-ohos;E:/Study/DevEco Studio/sdk/default/openharmony/native/sysroot/usr/lib/x86_64-linux-ohos")
+set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "D:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/lib/clang/15.0.4/lib/x86_64-linux-ohos;D:/Study/DevEco Studio/sdk/default/openharmony/native/sysroot/usr/lib;D:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/lib/x86_64-linux-ohos;D:/Study/DevEco Studio/sdk/default/openharmony/native/sysroot/usr/lib/x86_64-linux-ohos")
 set(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")

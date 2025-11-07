@@ -356,7 +356,7 @@ class ListImageView extends ViewPU {
                 {
                     const itemCreation = (elmtId, isInitialRender) => {
                         ViewStackProcessor.StartGetAccessRecordingFor(elmtId);
-                        itemCreation2(elmtId, isInitialRender);
+                        ListItem.create(deepRenderFunction, true);
                         if (!isInitialRender) {
                             ListItem.pop();
                         }

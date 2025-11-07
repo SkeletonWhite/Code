@@ -1,4 +1,4 @@
-# Install script for directory: E:/Study/Code/HarmonyOS/Login-master/entry/src/main/cpp
+# Install script for directory: D:/Study/Code/HarmonyOS/Login/entry/src/main/cpp
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -39,7 +39,7 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "E:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/llvm-objdump.exe")
+  set(CMAKE_OBJDUMP "D:/Study/DevEco Studio/sdk/default/openharmony/native/llvm/bin/llvm-objdump.exe")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "E:/Study/Code/HarmonyOS/Login-master/entry/.cxx/default/default/debug/arm64-v8a/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "D:/Study/Code/HarmonyOS/Login/entry/.cxx/default/default/debug/arm64-v8a/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
