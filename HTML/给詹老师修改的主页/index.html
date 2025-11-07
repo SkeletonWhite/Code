@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,4 +51,58 @@
     </div>
 </body>
 <script src="./index.js"></script>
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>詹睿妍的成绩查询系统</title>
+    <!-- 引入css和图标 -->
+    <link rel="stylesheet" href="./assets/style.css">
+    <link rel="stylesheet" href="./assets/iconfont/iconfont.css">
+</head>
+<body>
+    <div class="container" id="container">
+        <!-- 注册 -->
+        <div class="form-container sign-up-container">
+            <form action="#">
+                <div id="result"></div>
+            </form>
+        </div>
+        <!-- 登陆 -->
+        <div class="form-container sign-in-container">
+            <form action="#">
+                <h1>成绩查询系统</h1>
+                <div class="social-container">
+                    <a href="#" class="social"><i class="iconfont icon-qq"></i></a>
+                    <a href="#" class="social"><i class="iconfont icon-weixin"></i></a>
+                    <a href="#" class="social"><i class="iconfont icon-weibo"></i></a>
+                    <a href="#" class="social"><i class="iconfont icon-github"></i></a>
+                    <font color="grey" size="1">等都不支持</font>
+                </div>
+                <span>请填写以下内容以查询成绩!</span>
+                <input id="name" type="text" placeholder="用户名" oninput="filterNonChar(this)" required>
+                <input id="id6" type="password" placeholder="密码" required>
+            </form>
+        </div>
+        <!-- 侧边栏内容 -->
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left">
+                    <h1>查点别的?</h1>
+                    <p>点我回去吧</p>
+                    <button class="ghost" id="back" onclick="back()">返回</button>
+                </div>
+                <div class="overlay-panel overlay-right">
+                    <h1>填写完毕?</h1>
+                    <p>点我进行查询吧</p>
+                    <button class="ghost" id="query" onclick="query()">查询</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="./index.js"></script>
+>>>>>>> ec318aa102a8d3d32d13c8009f42cdc1e9210183
 </html>
