@@ -1,0 +1,1917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>骰子冒险 - 点击投掷赢积分</title>
+  <!-- Tailwind CSS v3 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- GSAP 动画库 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Physics2DPlugin.min.js"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF6B6B',
+            secondary: '#4ECDC4',
+            accent: '#FFD166',
+            dark: '#2C3E50',
+            light: '#F7FFF7'
+          },
+          fontFamily: {
+            sans: ['Comic Sans MS', 'Arial', 'sans-serif'],
+          },
+          animation: {
+            'bounce-slow': 'bounce 2s infinite',
+            'spin-slow': 'spin 3s linear infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .text-shadow {
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+      .text-shadow-lg {
+        text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5);
+      }
+      .dice-shadow {
+        filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.04)) drop-shadow(0 4px 3px rgb(0 0 0 / 0.1));
+      }
+      .btn-3d {
+        @apply relative px-6 py-3 rounded-full font-bold transform transition-all duration-150 overflow-hidden;
+        box-shadow: 0 4px 0 0 rgba(0,0,0,0.3);
+      }
+      .btn-3d:active {
+        @apply translate-y-1;
+        box-shadow: 0 2px 0 0 rgba(0,0,0,0.3);
+      }
+      .btn-3d::before {
+        content: '';
+        @apply absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/30 to-transparent z-0;
+      }
+      .btn-3d span {
+        @apply relative z-10;
+      }
+      .shop-item {
+        @apply bg-white/90 rounded-xl p-4 mb-3 shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer;
+      }
+      .shop-item-locked {
+        @apply bg-gray-200/70 rounded-xl p-4 mb-3 shadow-md opacity-70 cursor-not-allowed;
+      }
+      /* 3D骰子容器样式 */
+      .dice {
+        @apply absolute w-20 h-20;
+        position: absolute !important;
+        z-index: 10;
+        will-change: transform;
+        pointer-events: none;
+        user-select: none;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform-style: preserve-3d;
+        transition: transform 0.6s ease;
+      }
+      
+      /* 骰子面的通用样式 */
+      .dice-face {
+        @apply absolute w-20 h-20 rounded-lg flex items-center justify-center;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        backface-visibility: hidden;
+      }
+      
+      /* 骰子面的通用样式 */
+      .dice-face {
+        @apply absolute w-20 h-20 rounded-lg flex items-center justify-center;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        backface-visibility: hidden;
+      }
+      
+      /* 骰子各面定位 */
+      .dice-face-front  { transform: translateZ(40px); }
+      .dice-face-back   { transform: rotateY(180deg) translateZ(40px); }
+      .dice-face-right  { transform: rotateY(90deg) translateZ(40px); }
+      .dice-face-left   { transform: rotateY(-90deg) translateZ(40px); }
+      .dice-face-top    { transform: rotateX(90deg) translateZ(40px); }
+      .dice-face-bottom { transform: rotateX(-90deg) translateZ(40px); }
+      
+      /* 骰子面保持统一背景色 */
+      .dice-face {
+        background-color: white; /* 骰子面统一为白色背景 */
+      }
+      
+      /* 按照点数奇偶分组设置点数颜色 */
+      /* 奇数点颜色组 (1,3,5) - 点数为红色 */
+      .dice-1 .dice-dot, .dice-3 .dice-dot, .dice-5 .dice-dot {
+        background-color: #b91c1c; /* 红色点数 */
+      }
+      
+      /* 偶数点颜色组 (2,4,6) - 点数为蓝色 */
+      .dice-2 .dice-dot, .dice-4 .dice-dot, .dice-6 .dice-dot {
+        background-color: #1e40af; /* 蓝色点数 */
+      }
+      
+      /* 骰子点数样式 */
+      .dice-dot {
+        @apply absolute w-4 h-4 rounded-full;
+        background-color: white; /* 确保点数显示为白色 */
+        border: 1px solid rgba(0,0,0,0.2);
+        box-shadow: inset 0 0 2px rgba(0,0,0,0.3);
+      }
+      
+      /* 各点数布局 */
+      /* 点数1 */
+      .dice-1 .dot-1 { @apply translate-x-0 translate-y-0; }
+      
+      /* 点数2 */
+      .dice-2 .dot-1 { @apply -translate-x-6 -translate-y-6; }
+      .dice-2 .dot-2 { @apply translate-x-6 translate-y-6; }
+      
+      /* 点数3 */
+      .dice-3 .dot-1 { @apply -translate-x-6 -translate-y-6; }
+      .dice-3 .dot-2 { @apply translate-x-0 translate-y-0; }
+      .dice-3 .dot-3 { @apply translate-x-6 translate-y-6; }
+      
+      /* 点数4 */
+      .dice-4 .dot-1 { @apply -translate-x-6 -translate-y-6; }
+      .dice-4 .dot-2 { @apply translate-x-6 -translate-y-6; }
+      .dice-4 .dot-3 { @apply -translate-x-6 translate-y-6; }
+      .dice-4 .dot-4 { @apply translate-x-6 translate-y-6; }
+      
+      /* 点数5 */
+      .dice-5 .dot-1 { @apply -translate-x-6 -translate-y-6; }
+      .dice-5 .dot-2 { @apply translate-x-6 -translate-y-6; }
+      .dice-5 .dot-3 { @apply translate-x-0 translate-y-0; }
+      .dice-5 .dot-4 { @apply -translate-x-6 translate-y-6; }
+      .dice-5 .dot-5 { @apply translate-x-6 translate-y-6; }
+      
+      /* 点数6 */
+      .dice-6 .dot-1 { @apply -translate-x-6 -translate-y-6; }
+      .dice-6 .dot-2 { @apply translate-x-6 -translate-y-6; }
+      .dice-6 .dot-3 { @apply -translate-x-6 translate-y-0; }
+      .dice-6 .dot-4 { @apply translate-x-6 translate-y-0; }
+      .dice-6 .dot-5 { @apply -translate-x-6 translate-y-6; }
+      .dice-6 .dot-6 { @apply translate-x-6 translate-y-6; }
+      
+      /* 骰子材质样式 - 只设置边框颜色，不覆盖背景色 */
+      .dice-plastic .dice-face { border-color: #ddd; }
+      .dice-copper .dice-face { border-color: #8b5a2b; }
+      .dice-iron .dice-face { border-color: #696969; }
+      .dice-ivory .dice-face { border-color: #f0e68c; }
+      .dice-gold .dice-face { border-color: #daa520; }
+      .dice-gem .dice-face { border-color: #9370db; }
+      
+      /* 骰子颜色 */
+      .dice-blue .dice-dot { color: #1e40af; }
+      .dice-red .dice-dot { color: #b91c1c; }
+      .effect-popup {
+        @apply absolute text-xl font-bold text-white text-shadow-lg animate-bounce-slow;
+        animation: popup 1s forwards;
+      }
+      @keyframes popup {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(-50px); opacity: 0; }
+      }
+      .special-effect {
+        @apply absolute text-lg font-bold text-yellow-400 text-shadow-lg animate-bounce-slow;
+        animation: specialPopup 1.5s forwards;
+      }
+      @keyframes specialPopup {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(-80px); opacity: 0; }
+      }
+      .tooltip {
+        @apply invisible absolute bg-dark text-white text-xs rounded py-1 px-2 -mt-8 opacity-0 transition-opacity duration-300 whitespace-nowrap z-50;
+        width: max-content;
+      }
+      .has-tooltip:hover .tooltip {
+        @apply visible opacity-100;
+      }
+    }
+  </style>
+</head>
+<body class="bg-light min-h-screen overflow-hidden">
+  <!-- 游戏容器 -->
+  <div class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- 顶部信息栏 -->
+    <header class="flex justify-between items-center mb-6">
+      <div class="flex items-center">
+        <h1 class="text-4xl font-bold text-white text-shadow-lg">骰子冒险</h1>
+      </div>
+      <div class="flex items-center space-x-6">
+        <div class="flex items-center">
+          <i class="fa fa-star text-yellow-400 text-2xl mr-2"></i>
+          <span id="score" class="text-2xl font-bold text-white text-shadow">0</span>
+      </div>
+    </header>
+
+    <!-- 主要游戏区域 -->
+    <main class="flex flex-col md:flex-row gap-6">
+      <!-- 左侧骰子投掷区域 - 使用固定尺寸和强布局约束 -->
+    <div class="flex-1 bg-white/20 backdrop-blur-md rounded-2xl p-6 shadow-xl relative" style="height: 500px; overflow: hidden;">
+      <!-- 骰子容器 - 使用明确的固定尺寸和溢出控制，添加透视效果 -->
+      <div id="dice-area" class="relative w-full h-[400px] border-4 border-white/30 rounded-xl overflow-hidden bg-gradient-to-b from-blue-500/30 to-purple-500/30" style="position: relative; display: block; contain: layout paint; perspective: 1000px;">
+          <!-- 骰子将在这里动态生成 -->
+          
+          <!-- 投掷按钮 -->
+          <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2">
+            <button id="roll-btn" class="btn-3d bg-gradient-to-r from-primary to-secondary text-white">
+              <span class="flex items-center">
+                <i class="fa fa-random mr-2"></i>
+                投掷骰子
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 结果显示区域 - 确保正确显示在底部 -->
+        <div id="result-area" class="mt-4 p-4 bg-white/90 rounded-xl shadow-lg transition-all duration-300">
+          <h2 class="text-xl font-bold text-center text-dark mb-2">投掷结果</h2>
+          <div id="result-content" class="text-center">
+            <!-- 结果将在这里显示 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧商店面板 - 设置与左侧相同的高度 -->
+      <div class="w-full md:w-80 bg-white rounded-2xl p-4 shadow-xl overflow-y-auto" style="height: 500px;">
+        <h2 class="text-2xl font-bold text-center text-white text-shadow-lg mb-4">商店</h2>
+        
+        <!-- 商店分类标签 -->
+        <div class="flex justify-center mb-4">
+          <div class="bg-white/80 rounded-full p-1 flex">
+            <button class="shop-tab px-4 py-1 rounded-full bg-primary text-white font-bold" data-tab="upgrades">升级</button>
+            <button class="shop-tab px-4 py-1 rounded-full text-dark font-bold" data-tab="props">道具</button>
+            <button class="shop-tab px-4 py-1 rounded-full text-dark font-bold" data-tab="skins">外观</button>
+          </div>
+        </div>
+        
+        <!-- 商店内容区域 -->
+        <div class="shop-content" id="upgrades-tab">
+          <!-- 增加骰子数量 -->
+          <div class="shop-item" id="upgrade-dice-count">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-dark">增加骰子</h3>
+              <span class="text-primary font-bold">等级: <span id="dice-count-level">0</span>/5</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">增加一枚骰子，提高获得高分的机会</p>
+            <div class="flex justify-between items-center">
+              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                <i class="fa fa-star mr-1"></i>
+                <span id="dice-count-cost">100</span> 积分
+              </span>
+              <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                +1 骰子
+              </span>
+            </div>
+          </div>
+          
+          <!-- 增加1/6点积分倍率 -->
+          <div class="shop-item" id="upgrade-score-multiplier">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-dark">点数倍率</h3>
+              <span class="text-primary font-bold">等级: <span id="score-multiplier-level">1</span>/10</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">增加投掷到1或6时获得的积分倍率</p>
+            <div class="flex justify-between items-center">
+              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                <i class="fa fa-star mr-1"></i>
+                <span id="score-multiplier-cost">200</span> 积分
+              </span>
+              <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                x<span id="score-multiplier-value">1.0</span> 倍率
+              </span>
+            </div>
+          </div>
+          
+          <!-- 增加特殊情况积分倍率 -->
+          <div class="shop-item" id="upgrade-special-multiplier">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-dark">特殊倍率</h3>
+              <span class="text-primary font-bold">等级: <span id="special-multiplier-level">1</span>/10</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">增加特殊组合（如对子、顺子）获得的积分倍率</p>
+            <div class="flex justify-between items-center">
+              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                <i class="fa fa-star mr-1"></i>
+                <span id="special-multiplier-cost">300</span> 积分
+              </span>
+              <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                x<span id="special-multiplier-value">1.0</span> 倍率
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="shop-content hidden" id="props-tab">
+          <!-- 灌铅骰子 -->
+          <div class="shop-item" id="prop-weighted-dice">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-dark">灌铅骰子</h3>
+              <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                <i class="fa fa-bolt mr-1"></i>
+                单次使用
+              </span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">指定一枚骰子本次骰出的点数</p>
+            <div class="flex justify-between items-center">
+              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                <i class="fa fa-star mr-1"></i>
+                <span id="weighted-dice-cost">500</span> 积分
+              </span>
+              <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                <i class="fa fa-check-circle mr-1"></i>
+                库存: <span id="weighted-dice-count">0</span>
+              </span>
+            </div>
+          </div>
+          
+          <!-- 魔法骰子 -->
+          <div class="shop-item" id="prop-magic-dice">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-dark">魔法骰子</h3>
+              <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                <i class="fa fa-bolt mr-1"></i>
+                单次使用
+              </span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">修改一枚骰子的投掷结果</p>
+            <div class="flex justify-between items-center">
+              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                <i class="fa fa-star mr-1"></i>
+                <span id="magic-dice-cost">800</span> 积分
+              </span>
+              <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                <i class="fa fa-check-circle mr-1"></i>
+                库存: <span id="magic-dice-count">0</span>
+              </span>
+            </div>
+          </div>
+          
+          <!-- 镜像骰子 -->
+          <div class="shop-item" id="prop-mirror-dice">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-dark">镜像骰子</h3>
+              <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                <i class="fa fa-bolt mr-1"></i>
+                单次使用
+              </span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">将一枚骰子的结果复制到另一枚</p>
+            <div class="flex justify-between items-center">
+              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                <i class="fa fa-star mr-1"></i>
+                <span id="mirror-dice-cost">1000</span> 积分
+              </span>
+              <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                <i class="fa fa-check-circle mr-1"></i>
+                库存: <span id="mirror-dice-count">0</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="shop-content hidden" id="skins-tab">
+          <!-- 骰子外观升级 -->
+          <div class="shop-item" id="skin-plastic">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-dark">塑料骰子</h3>
+              <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">已拥有</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">基础骰子外观</p>
+            <div class="flex justify-between items-center">
+              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                <i class="fa fa-star mr-1"></i>
+                0 积分
+              </span>
+              <button class="text-xs bg-primary text-white px-2 py-1 rounded-full equip-skin" data-skin="plastic">
+                使用
+              </button>
+            </div>
+          </div>
+          
+          <div class="shop-item" id="skin-copper">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-dark">铜骰子</h3>
+              <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">未拥有</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">金属质感的铜骰子</p>
+            <div class="flex justify-between items-center">
+              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                <i class="fa fa-star mr-1"></i>
+                1500 积分
+              </span>
+              <button class="text-xs bg-primary text-white px-2 py-1 rounded-full buy-skin" data-skin="copper" data-cost="1500">
+                购买
+              </button>
+            </div>
+          </div>
+          
+          <div class="shop-item" id="skin-iron">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-dark">铁骰子</h3>
+              <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">未拥有</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">坚固耐用的铁骰子</p>
+            <div class="flex justify-between items-center">
+              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                <i class="fa fa-star mr-1"></i>
+                3000 积分
+              </span>
+              <button class="text-xs bg-primary text-white px-2 py-1 rounded-full buy-skin" data-skin="iron" data-cost="3000">
+                购买
+              </button>
+            </div>
+          </div>
+          
+          <div class="shop-item" id="skin-ivory">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-dark">象牙骰子</h3>
+              <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">未拥有</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">高雅珍贵的象牙骰子</p>
+            <div class="flex justify-between items-center">
+              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                <i class="fa fa-star mr-1"></i>
+                5000 积分
+              </span>
+              <button class="text-xs bg-primary text-white px-2 py-1 rounded-full buy-skin" data-skin="ivory" data-cost="5000">
+                购买
+              </button>
+            </div>
+          </div>
+          
+          <div class="shop-item" id="skin-gold">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-dark">金骰子</h3>
+              <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">未拥有</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">华丽闪耀的金骰子</p>
+            <div class="flex justify-between items-center">
+              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                <i class="fa fa-star mr-1"></i>
+                10000 积分
+              </span>
+              <button class="text-xs bg-primary text-white px-2 py-1 rounded-full buy-skin" data-skin="gold" data-cost="10000">
+                购买
+              </button>
+            </div>
+          </div>
+          
+          <div class="shop-item" id="skin-gem">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-dark">宝石骰子</h3>
+              <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">未拥有</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">璀璨夺目的宝石骰子</p>
+            <div class="flex justify-between items-center">
+              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                <i class="fa fa-star mr-1"></i>
+                20000 积分
+              </span>
+              <button class="text-xs bg-primary text-white px-2 py-1 rounded-full buy-skin" data-skin="gem" data-cost="20000">
+                购买
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 模态框 - 灌铅骰子 -->
+  <div id="weighted-dice-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 shadow-2xl max-w-md w-full">
+      <h2 class="text-2xl font-bold text-center mb-4">选择点数</h2>
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        <button class="point-btn w-full h-20 bg-primary text-white rounded-lg text-2xl font-bold hover:bg-primary/80 transition-colors" data-point="1">1</button>
+        <button class="point-btn w-full h-20 bg-primary text-white rounded-lg text-2xl font-bold hover:bg-primary/80 transition-colors" data-point="2">2</button>
+        <button class="point-btn w-full h-20 bg-primary text-white rounded-lg text-2xl font-bold hover:bg-primary/80 transition-colors" data-point="3">3</button>
+        <button class="point-btn w-full h-20 bg-primary text-white rounded-lg text-2xl font-bold hover:bg-primary/80 transition-colors" data-point="4">4</button>
+        <button class="point-btn w-full h-20 bg-primary text-white rounded-lg text-2xl font-bold hover:bg-primary/80 transition-colors" data-point="5">5</button>
+        <button class="point-btn w-full h-20 bg-primary text-white rounded-lg text-2xl font-bold hover:bg-primary/80 transition-colors" data-point="6">6</button>
+      </div>
+      <div class="flex justify-end">
+        <button id="close-weighted-modal" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态框 - 魔法骰子 -->
+  <div id="magic-dice-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 shadow-2xl max-w-md w-full">
+      <h2 class="text-2xl font-bold text-center mb-4">选择要修改的骰子</h2>
+      <div id="magic-dice-selection" class="grid grid-cols-3 gap-4 mb-6">
+        <!-- 骰子选择将在这里动态生成 -->
+      </div>
+      <div class="flex justify-end">
+        <button id="close-magic-modal" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态框 - 选择新点数 -->
+  <div id="change-point-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 shadow-2xl max-w-md w-full">
+      <h2 class="text-2xl font-bold text-center mb-4">选择新点数</h2>
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        <button class="new-point-btn w-full h-20 bg-primary text-white rounded-lg text-2xl font-bold hover:bg-primary/80 transition-colors" data-point="1">1</button>
+        <button class="new-point-btn w-full h-20 bg-primary text-white rounded-lg text-2xl font-bold hover:bg-primary/80 transition-colors" data-point="2">2</button>
+        <button class="new-point-btn w-full h-20 bg-primary text-white rounded-lg text-2xl font-bold hover:bg-primary/80 transition-colors" data-point="3">3</button>
+        <button class="new-point-btn w-full h-20 bg-primary text-white rounded-lg text-2xl font-bold hover:bg-primary/80 transition-colors" data-point="4">4</button>
+        <button class="new-point-btn w-full h-20 bg-primary text-white rounded-lg text-2xl font-bold hover:bg-primary/80 transition-colors" data-point="5">5</button>
+        <button class="new-point-btn w-full h-20 bg-primary text-white rounded-lg text-2xl font-bold hover:bg-primary/80 transition-colors" data-point="6">6</button>
+      </div>
+      <div class="flex justify-end">
+        <button id="close-change-point-modal" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态框 - 镜像骰子 -->
+  <div id="mirror-dice-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 shadow-2xl max-w-md w-full">
+      <h2 class="text-2xl font-bold text-center mb-4">选择源骰子</h2>
+      <div id="source-dice-selection" class="grid grid-cols-3 gap-4 mb-6">
+        <!-- 源骰子选择将在这里动态生成 -->
+      </div>
+      <div class="flex justify-end">
+        <button id="close-mirror-modal" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态框 - 选择目标骰子 -->
+  <div id="target-dice-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 shadow-2xl max-w-md w-full">
+      <h2 class="text-2xl font-bold text-center mb-4">选择目标骰子</h2>
+      <div id="target-dice-selection" class="grid grid-cols-3 gap-4 mb-6">
+        <!-- 目标骰子选择将在这里动态生成 -->
+      </div>
+      <div class="flex justify-end">
+        <button id="close-target-modal" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 游戏状态
+    const gameState = {
+      score: 9999999,
+      diceCount: 1,
+      maxDiceCount: 6,
+      isRolling: false,
+      currentDice: [],
+      selectedDiceIndex: -1,
+      sourceDiceIndex: -1,
+      
+      // 升级
+      upgrades: {
+        diceCount: {
+          level: 0,
+          maxLevel: 5,
+          baseCost: 100,
+          costMultiplier: 2
+        },
+        scoreMultiplier: {
+          level: 1,
+          maxLevel: 10,
+          baseCost: 200,
+          costMultiplier: 1.5,
+          baseValue: 1.0,
+          valueIncrease: 0.2
+        },
+        specialMultiplier: {
+          level: 1,
+          maxLevel: 10,
+          baseCost: 300,
+          costMultiplier: 1.5,
+          baseValue: 1.0,
+          valueIncrease: 0.3
+        }
+      },
+      
+      // 道具
+      props: {
+        weightedDice: {
+          count: 0,
+          cost: 500
+        },
+        magicDice: {
+          count: 0,
+          cost: 800
+        },
+        mirrorDice: {
+          count: 0,
+          cost: 1000
+        }
+      },
+      
+      // 外观
+      skins: {
+        current: 'plastic',
+        owned: ['plastic'],
+        list: ['plastic', 'copper', 'iron', 'ivory', 'gold', 'gem'],
+        costs: {
+          plastic: 0,
+          copper: 1500,
+          iron: 3000,
+          ivory: 5000,
+          gold: 10000,
+          gem: 20000
+        }
+      },
+      
+      // 特殊组合得分
+      specialScores: {
+        pair: 10,          // 一对
+        twoPairs: 20,      // 两对
+        threeOfAKind: 30,  // 三条
+        smallFlush: 40,    // 小同花（4个同色）
+        straight: 50,      // 顺子
+        fullHouse: 60,     // 葫芦
+        fourOfAKind: 70,   // 四条
+        bigFlush: 80,      // 大同花（5个同色）
+        threePairs: 90     // 三对
+      },
+      
+      // 道具使用状态
+      usingWeightedDice: false,
+      usingMagicDice: false,
+      usingMirrorDice: false,
+      targetDiceIndex: -1,
+      selectedPoint: -1
+    };
+
+    // DOM 元素
+    const elements = {
+      scoreDisplay: document.getElementById('score'),
+      rollBtn: document.getElementById('roll-btn'),
+      diceArea: document.getElementById('dice-area'),
+      resultArea: document.getElementById('result-area'),
+      resultContent: document.getElementById('result-content'),
+      
+      // 升级元素
+      diceCountLevel: document.getElementById('dice-count-level'),
+      diceCountCost: document.getElementById('dice-count-cost'),
+      upgradeDiceCount: document.getElementById('upgrade-dice-count'),
+      
+      scoreMultiplierLevel: document.getElementById('score-multiplier-level'),
+      scoreMultiplierValue: document.getElementById('score-multiplier-value'),
+      scoreMultiplierCost: document.getElementById('score-multiplier-cost'),
+      upgradeScoreMultiplier: document.getElementById('upgrade-score-multiplier'),
+      
+      specialMultiplierLevel: document.getElementById('special-multiplier-level'),
+      specialMultiplierValue: document.getElementById('special-multiplier-value'),
+      specialMultiplierCost: document.getElementById('special-multiplier-cost'),
+      upgradeSpecialMultiplier: document.getElementById('upgrade-special-multiplier'),
+      
+      // 道具元素
+      weightedDiceCount: document.getElementById('weighted-dice-count'),
+      weightedDiceCost: document.getElementById('weighted-dice-cost'),
+      propWeightedDice: document.getElementById('prop-weighted-dice'),
+      
+      magicDiceCount: document.getElementById('magic-dice-count'),
+      magicDiceCost: document.getElementById('magic-dice-cost'),
+      propMagicDice: document.getElementById('prop-magic-dice'),
+      
+      mirrorDiceCount: document.getElementById('mirror-dice-count'),
+      mirrorDiceCost: document.getElementById('mirror-dice-cost'),
+      propMirrorDice: document.getElementById('prop-mirror-dice'),
+      
+      // 模态框
+      weightedDiceModal: document.getElementById('weighted-dice-modal'),
+      closeWeightedModal: document.getElementById('close-weighted-modal'),
+      
+      magicDiceModal: document.getElementById('magic-dice-modal'),
+      closeMagicModal: document.getElementById('close-magic-modal'),
+      magicDiceSelection: document.getElementById('magic-dice-selection'),
+      
+      changePointModal: document.getElementById('change-point-modal'),
+      closeChangePointModal: document.getElementById('close-change-point-modal'),
+      
+      mirrorDiceModal: document.getElementById('mirror-dice-modal'),
+      closeMirrorModal: document.getElementById('close-mirror-modal'),
+      sourceDiceSelection: document.getElementById('source-dice-selection'),
+      
+      targetDiceModal: document.getElementById('target-dice-modal'),
+      closeTargetModal: document.getElementById('close-target-modal'),
+      targetDiceSelection: document.getElementById('target-dice-selection'),
+      
+      // 商店标签
+      shopTabs: document.querySelectorAll('.shop-tab'),
+      shopContents: document.querySelectorAll('.shop-content')
+    };
+
+    // 初始化游戏
+    function initGame() {
+      updateUI();
+      createDice();
+      setupEventListeners();
+    }
+
+    // 更新UI
+    function updateUI() {
+      // 更新分数
+      elements.scoreDisplay.textContent = Math.floor(gameState.score);
+      
+      // 更新升级UI
+      updateUpgradeUI();
+      
+      // 更新道具UI
+      updatePropsUI();
+      
+      // 更新外观UI
+      updateSkinsUI();
+    }
+
+    // 更新升级UI
+    function updateUpgradeUI() {
+      const diceCountUpgrade = gameState.upgrades.diceCount;
+      elements.diceCountLevel.textContent = diceCountUpgrade.level;
+      const diceCountCost = Math.floor(diceCountUpgrade.baseCost * Math.pow(diceCountUpgrade.costMultiplier, diceCountUpgrade.level));
+      elements.diceCountCost.textContent = diceCountCost;
+      
+      if (diceCountUpgrade.level >= diceCountUpgrade.maxLevel || gameState.score < diceCountCost) {
+        elements.upgradeDiceCount.classList.add('shop-item-locked');
+        elements.upgradeDiceCount.classList.remove('shop-item');
+      } else {
+        elements.upgradeDiceCount.classList.add('shop-item');
+        elements.upgradeDiceCount.classList.remove('shop-item-locked');
+        createDice();
+      }
+      
+      const scoreMultiplier = gameState.upgrades.scoreMultiplier;
+      elements.scoreMultiplierLevel.textContent = scoreMultiplier.level;
+      const scoreMultiplierValue = scoreMultiplier.baseValue + scoreMultiplier.level * scoreMultiplier.valueIncrease;
+      elements.scoreMultiplierValue.textContent = scoreMultiplierValue.toFixed(1);
+      const scoreMultiplierCost = Math.floor(scoreMultiplier.baseCost * Math.pow(scoreMultiplier.costMultiplier, scoreMultiplier.level - 1));
+      elements.scoreMultiplierCost.textContent = scoreMultiplierCost;
+      
+      if (scoreMultiplier.level >= scoreMultiplier.maxLevel || gameState.score < scoreMultiplierCost) {
+        elements.upgradeScoreMultiplier.classList.add('shop-item-locked');
+        elements.upgradeScoreMultiplier.classList.remove('shop-item');
+      } else {
+        elements.upgradeScoreMultiplier.classList.add('shop-item');
+        elements.upgradeScoreMultiplier.classList.remove('shop-item-locked');
+      }
+      
+      const specialMultiplier = gameState.upgrades.specialMultiplier;
+      elements.specialMultiplierLevel.textContent = specialMultiplier.level;
+      const specialMultiplierValue = specialMultiplier.baseValue + specialMultiplier.level * specialMultiplier.valueIncrease;
+      elements.specialMultiplierValue.textContent = specialMultiplierValue.toFixed(1);
+      const specialMultiplierCost = Math.floor(specialMultiplier.baseCost * Math.pow(specialMultiplier.costMultiplier, specialMultiplier.level - 1));
+      elements.specialMultiplierCost.textContent = specialMultiplierCost;
+      
+      if (specialMultiplier.level >= specialMultiplier.maxLevel || gameState.score < specialMultiplierCost || gameState.diceCount < 2) {
+        elements.upgradeSpecialMultiplier.classList.add('shop-item-locked');
+        elements.upgradeSpecialMultiplier.classList.remove('shop-item');
+      } else {
+        elements.upgradeSpecialMultiplier.classList.add('shop-item');
+        elements.upgradeSpecialMultiplier.classList.remove('shop-item-locked');
+      }
+    }
+
+    // 更新道具UI
+    function updatePropsUI() {
+      elements.weightedDiceCount.textContent = gameState.props.weightedDice.count;
+      elements.weightedDiceCost.textContent = gameState.props.weightedDice.cost;
+      
+      if (gameState.score < gameState.props.weightedDice.cost) {
+        elements.propWeightedDice.classList.add('shop-item-locked');
+        elements.propWeightedDice.classList.remove('shop-item');
+      } else {
+        elements.propWeightedDice.classList.add('shop-item');
+        elements.propWeightedDice.classList.remove('shop-item-locked');
+      }
+      
+      elements.magicDiceCount.textContent = gameState.props.magicDice.count;
+      elements.magicDiceCost.textContent = gameState.props.magicDice.cost;
+      
+      if (gameState.score < gameState.props.magicDice.cost) {
+        elements.propMagicDice.classList.add('shop-item-locked');
+        elements.propMagicDice.classList.remove('shop-item');
+      } else {
+        elements.propMagicDice.classList.add('shop-item');
+        elements.propMagicDice.classList.remove('shop-item-locked');
+      }
+      
+      elements.mirrorDiceCount.textContent = gameState.props.mirrorDice.count;
+      elements.mirrorDiceCost.textContent = gameState.props.mirrorDice.cost;
+      
+      if (gameState.score < gameState.props.mirrorDice.cost || gameState.diceCount < 2) {
+        elements.propMirrorDice.classList.add('shop-item-locked');
+        elements.propMirrorDice.classList.remove('shop-item');
+      } else {
+        elements.propMirrorDice.classList.add('shop-item');
+        elements.propMirrorDice.classList.remove('shop-item-locked');
+      }
+    }
+
+    // 更新外观UI
+    function updateSkinsUI() {
+      gameState.skins.list.forEach(skin => {
+        const skinElement = document.getElementById(`skin-${skin}`);
+        const isOwned = gameState.skins.owned.includes(skin);
+        const isCurrent = gameState.skins.current === skin;
+        
+        const statusElement = skinElement.querySelector('h3 + span');
+        const actionButton = skinElement.querySelector('button');
+        
+        if (isOwned) {
+          statusElement.textContent = '已拥有';
+          statusElement.className = 'text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full';
+          
+          if (isCurrent) {
+            actionButton.textContent = '已使用';
+            actionButton.className = 'text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded-full';
+            actionButton.disabled = true;
+          } else {
+            actionButton.textContent = '使用';
+            actionButton.className = 'text-xs bg-primary text-white px-2 py-1 rounded-full equip-skin';
+            actionButton.dataset.skin = skin;
+            actionButton.disabled = false;
+          }
+        } else {
+          statusElement.textContent = '未拥有';
+          statusElement.className = 'text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full';
+          
+          actionButton.textContent = '购买';
+          actionButton.className = 'text-xs bg-primary text-white px-2 py-1 rounded-full buy-skin';
+          actionButton.dataset.skin = skin;
+          actionButton.dataset.cost = gameState.skins.costs[skin];
+          actionButton.disabled = gameState.score < gameState.skins.costs[skin];
+        }
+      });
+    }
+
+    // 创建3D骰子
+    function createDice() {
+      // 清空现有骰子
+      elements.diceArea.querySelectorAll('.dice').forEach(dice => dice.remove());
+      gameState.currentDice = [];
+      
+      // 创建新骰子
+      for (let i = 0; i < gameState.diceCount; i++) {
+        const diceContainer = document.createElement('div');
+        diceContainer.className = `dice dice-${gameState.skins.current}`;
+        diceContainer.dataset.index = i;
+        diceContainer.dataset.point = 1; // 设置默认点数
+        
+        // 设置定位样式
+        diceContainer.style.position = 'absolute';
+        diceContainer.style.willChange = 'transform';
+        diceContainer.style.pointerEvents = 'none';
+        diceContainer.style.userSelect = 'none';
+        diceContainer.style.margin = '0';
+        diceContainer.style.padding = '0';
+        
+        // 创建骰子的6个面
+        const faces = ['front', 'back', 'right', 'left', 'top', 'bottom'];
+        const points = [1, 2, 3, 4, 5, 6]; // 每个面对应不同的点数
+        
+        faces.forEach((face, index) => {
+          const point = points[index];
+          const faceElement = document.createElement('div');
+          faceElement.className = `dice-face dice-face-${face} dice-${point}`;
+          
+          // 根据面添加对应的点数
+          createDots(faceElement, point);
+          
+          diceContainer.appendChild(faceElement);
+        });
+        
+        // 默认居中显示
+        const areaWidth = elements.diceArea.offsetWidth;
+        const areaHeight = elements.diceArea.offsetHeight;
+        
+        // 计算居中位置（考虑骰子宽度80px）
+        const centerX = (areaWidth - 80) / 2;
+        const centerY = (areaHeight - 80) / 2;
+        
+        // 使用transform.translate定位骰子居中
+        diceContainer.style.transform = `translate(${centerX}px, ${centerY}px)`;
+        
+        elements.diceArea.appendChild(diceContainer);
+        
+        // 添加到游戏状态
+        gameState.currentDice.push({
+          element: diceContainer,
+          point: 1,
+          color: 'blue', // 默认颜色
+          locked: false
+        });
+      }
+    }
+    
+    // 创建骰子点数
+    function createDots(faceElement, point) {
+      // 清空现有点数
+      faceElement.innerHTML = '';
+      faceElement.className = faceElement.className.replace(/dice-\d/g, '');
+      faceElement.classList.add(`dice-${point}`);
+      
+      // 根据点数创建点
+      for (let i = 1; i <= point; i++) {
+        const dot = document.createElement('div');
+        dot.className = `dice-dot dot-${i}`;
+        // 确保点数颜色与面的文字颜色一致
+        dot.style.backgroundColor = 'currentColor';
+        faceElement.appendChild(dot);
+      }
+    }
+
+    // 设置事件监听器
+    function setupEventListeners() {
+      // 投掷按钮
+      elements.rollBtn.addEventListener('click', rollDice);
+      
+      // 升级按钮
+      elements.upgradeDiceCount.addEventListener('click', () => upgrade('diceCount'));
+      elements.upgradeScoreMultiplier.addEventListener('click', () => upgrade('scoreMultiplier'));
+      elements.upgradeSpecialMultiplier.addEventListener('click', () => upgrade('specialMultiplier'));
+      
+      // 道具按钮
+      elements.propWeightedDice.addEventListener('click', buyProp('weightedDice'));
+      elements.propMagicDice.addEventListener('click', buyProp('magicDice'));
+      elements.propMirrorDice.addEventListener('click', buyProp('mirrorDice'));
+      
+      // 模态框关闭按钮
+      elements.closeWeightedModal.addEventListener('click', () => elements.weightedDiceModal.classList.add('hidden'));
+      elements.closeMagicModal.addEventListener('click', () => elements.magicDiceModal.classList.add('hidden'));
+      elements.closeChangePointModal.addEventListener('click', () => elements.changePointModal.classList.add('hidden'));
+      elements.closeMirrorModal.addEventListener('click', () => elements.mirrorDiceModal.classList.add('hidden'));
+      elements.closeTargetModal.addEventListener('click', () => elements.targetDiceModal.classList.add('hidden'));
+      
+      // 点数选择按钮
+      document.querySelectorAll('.point-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const point = parseInt(btn.dataset.point);
+          useWeightedDice(point);
+          elements.weightedDiceModal.classList.add('hidden');
+        });
+      });
+      
+      // 新点数选择按钮
+      document.querySelectorAll('.new-point-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const point = parseInt(btn.dataset.point);
+          changeDicePoint(point);
+          elements.changePointModal.classList.add('hidden');
+        });
+      });
+      
+      // 商店标签切换
+      elements.shopTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabId = tab.dataset.tab;
+          
+          // 更新标签样式
+          elements.shopTabs.forEach(t => {
+            t.classList.remove('bg-primary', 'text-white');
+            t.classList.add('text-dark');
+          });
+          tab.classList.add('bg-primary', 'text-white');
+          tab.classList.remove('text-dark');
+          
+          // 更新内容显示
+          elements.shopContents.forEach(content => {
+            content.classList.add('hidden');
+          });
+          document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+        });
+      });
+      
+      // 购买外观
+      document.querySelectorAll('.buy-skin').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const skin = btn.dataset.skin;
+          const cost = parseInt(btn.dataset.cost);
+          buySkin(skin, cost);
+        });
+      });
+      
+      // 使用外观
+      document.querySelectorAll('.equip-skin').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const skin = btn.dataset.skin;
+          equipSkin(skin);
+        });
+      });
+    }
+
+    // 投掷骰子 - 使用3D变换动画
+    function rollDice() {
+      // 检查是否正在投掷中
+      if (gameState.isRolling) return;
+      
+      // 设置为true以防止重复点击
+      gameState.isRolling = true;
+      
+      // 禁用商店区域
+      const shopSection = document.querySelector('.w-full.md\\:w-80.bg-white.rounded-2xl.p-4.shadow-xl');
+      if (shopSection) {
+        shopSection.classList.add('opacity-50', 'pointer-events-none');
+        shopSection.setAttribute('disabled', 'true');
+      }
+      
+      // 重置骰子状态
+      gameState.currentDice.forEach(dice => {
+        dice.locked = false;
+      });
+      
+      // 获取容器尺寸
+      const areaWidth = elements.diceArea.offsetWidth;
+      const areaHeight = elements.diceArea.offsetHeight;
+      
+      // 骰子数量和完成计数
+      const totalDice = gameState.currentDice.length;
+      let completedDice = 0;
+      
+      gameState.currentDice.forEach((dice, index) => {
+        // 随机点数
+        const point = Math.floor(Math.random() * 6) + 1;
+        dice.point = point;
+        
+        // 应用CSS类（包含点数类以确保颜色正确显示）
+        dice.element.className = `dice dice-${gameState.skins.current} dice-${point}`;
+        dice.element.dataset.point = point;
+        
+        // 生成随机目标位置
+        const targetX = Math.random() * (areaWidth - 80) + 40;
+        const targetY = Math.random() * (areaHeight - 80) + 40;
+        
+        // 生成随机的3D旋转角度，使骰子看起来是随机滚动的
+        // 关键是确保旋转后正面显示的是正确的点数
+        const rotateX = 360 * Math.floor(Math.random() * 3) + 90 * Math.floor(Math.random() * 4);
+        const rotateY = 360 * Math.floor(Math.random() * 3) + 90 * Math.floor(Math.random() * 4);
+        
+        // 使用纯CSS transform动画
+        // 重置transform
+        dice.element.style.transition = 'none';
+        dice.element.style.transform = `translate(${targetX}px, ${targetY}px)`;
+        
+        // 强制重排，确保动画正确开始
+        void dice.element.offsetWidth;
+        
+        // 设置动画持续时间和缓动函数
+        const animationDuration = 2000 + Math.random() * 500;
+        dice.element.style.transition = `transform ${animationDuration}ms cubic-bezier(0.68, -0.55, 0.265, 1.55)`;
+        
+        // 应用最终transform（包含位置和3D旋转）
+        dice.element.style.transform = `translate(${targetX}px, ${targetY}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        
+        // 监听动画结束事件
+        dice.element.addEventListener('transitionend', onTransitionEnd);
+        
+        // 动画结束处理函数
+        function onTransitionEnd() {
+          // 移除事件监听器避免重复触发
+          dice.element.removeEventListener('transitionend', onTransitionEnd);
+          
+          // 清除过渡，稳定最终位置
+          dice.element.style.transition = 'none';
+          dice.element.style.transform = `translate(${targetX}px, ${targetY}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+          
+          // 计数完成的骰子
+          completedDice++;
+          
+          // 所有骰子完成后执行回调
+          if (completedDice === totalDice) {
+            setTimeout(() => {
+              onRollComplete();
+            }, 100); // 短暂延迟确保视觉效果完成
+          }
+        }
+        
+        // 添加一个安全定时器，确保即使动画不触发也能完成投掷
+        setTimeout(() => {
+          // 检查骰子是否已经处理过
+          if (dice.element.dataset.completed !== 'true') {
+            dice.element.dataset.completed = 'true';
+            onTransitionEnd();
+          }
+        }, 3000); // 3秒超时
+      });
+    }
+
+    // 投掷完成
+    function onRollComplete() {
+      gameState.isRolling = false;
+      
+      // 计算得分
+      calculateScore();
+      
+      // 更新UI
+      updateUI();
+      
+      // 显示结果
+      showResult();
+      
+      // 恢复投掷按钮和商店区域
+      elements.rollBtn.style.display = ''; // 显示投掷按钮
+      
+      // 启用商店区域
+      const shopSection = document.querySelector('.w-full.md\:w-80.bg-white.rounded-2xl.p-4.shadow-xl');
+      if (shopSection) {
+        shopSection.classList.remove('opacity-50', 'pointer-events-none');
+        shopSection.removeAttribute('disabled');
+      }
+    }
+
+    // 计算得分
+    function calculateScore() {
+      let score = 0;
+      const points = gameState.currentDice.map(dice => dice.point);
+      const colors = gameState.currentDice.map(dice => dice.color);
+      
+      // 基础得分（1和6）
+      points.forEach(point => {
+        if (point === 1 || point === 6) {
+          const multiplier = gameState.upgrades.scoreMultiplier.baseValue + 
+                            gameState.upgrades.scoreMultiplier.level * 
+                            gameState.upgrades.scoreMultiplier.valueIncrease;
+          score += point * multiplier;
+        }
+      });
+      
+      // 特殊组合得分
+      if (gameState.diceCount >= 2) {
+        const specialScore = calculateSpecialScore(points, colors);
+        const multiplier = gameState.upgrades.specialMultiplier.baseValue + 
+                          gameState.upgrades.specialMultiplier.level * 
+                          gameState.upgrades.specialMultiplier.valueIncrease;
+        score += specialScore * multiplier;
+      }
+      
+      // 更新总分
+      gameState.score += score;
+      
+      // 显示得分动画
+      showScoreAnimation(score);
+    }
+
+    // 计算特殊组合得分
+    function calculateSpecialScore(points, colors) {
+      let score = 0;
+      const sortedPoints = [...points].sort((a, b) => a - b);
+      
+      // 统计点数出现次数
+      const pointCounts = {};
+      points.forEach(point => {
+        pointCounts[point] = (pointCounts[point] || 0) + 1;
+      });
+      
+      // 统计颜色出现次数
+      const colorCounts = {};
+      colors.forEach(color => {
+        colorCounts[color] = (colorCounts[color] || 0) + 1;
+      });
+      
+      // 检查特殊组合
+      const counts = Object.values(pointCounts).sort((a, b) => b - a);
+      
+      // 三对 (6个骰子)
+      if (gameState.diceCount === 6 && counts.length === 3 && counts.every(count => count === 2)) {
+        score += gameState.specialScores.threePairs;
+      }
+      // 大同花 (5个同色)
+      else if (gameState.diceCount >= 5 && Object.values(colorCounts).some(count => count >= 5)) {
+        score += gameState.specialScores.bigFlush;
+      }
+      // 四条
+      else if (counts[0] === 4) {
+        score += gameState.specialScores.fourOfAKind;
+      }
+      // 葫芦 (3+2)
+      else if (counts[0] === 3 && counts[1] === 2) {
+        score += gameState.specialScores.fullHouse;
+      }
+      // 顺子
+      else if (isStraight(sortedPoints)) {
+        score += gameState.specialScores.straight;
+      }
+      // 小同花 (4个同色)
+      else if (Object.values(colorCounts).some(count => count >= 4)) {
+        score += gameState.specialScores.smallFlush;
+      }
+      // 三条
+      else if (counts[0] === 3) {
+        score += gameState.specialScores.threeOfAKind;
+      }
+      // 两对
+      else if (counts[0] === 2 && counts[1] === 2) {
+        score += gameState.specialScores.twoPairs;
+      }
+      // 一对
+      else if (counts[0] === 2) {
+        score += gameState.specialScores.pair;
+      }
+      
+      return score;
+    }
+
+    // 检查是否为顺子
+    function isStraight(sortedPoints) {
+      if (sortedPoints.length < 5) return false;
+      
+      // 创建唯一值的数组，移除重复点
+      const uniquePoints = [...new Set(sortedPoints)].sort((a, b) => a - b);
+      
+      // 检查是否有5个连续的数字
+      for (let i = 0; i <= uniquePoints.length - 5; i++) {
+        let isStraight = true;
+        for (let j = 0; j < 4; j++) {
+          if (uniquePoints[i + j + 1] !== uniquePoints[i + j] + 1) {
+            isStraight = false;
+            break;
+          }
+        }
+        if (isStraight) return true;
+      }
+      
+      return false;
+    }
+
+    // 显示得分动画
+    function showScoreAnimation(score) {
+      if (score <= 0) return;
+      
+      const popup = document.createElement('div');
+      popup.className = 'effect-popup';
+      popup.textContent = `+${Math.floor(score)}`;
+      
+      // 随机位置
+      const areaWidth = elements.diceArea.offsetWidth;
+      const areaHeight = elements.diceArea.offsetHeight;
+      
+      const x = Math.random() * (areaWidth - 100) + 50;
+      const y = Math.random() * (areaHeight - 200) + 50;
+      
+      popup.style.left = `${x}px`;
+      popup.style.top = `${y}px`;
+      
+      elements.diceArea.appendChild(popup);
+      
+      // 移除动画元素
+      setTimeout(() => {
+        popup.remove();
+      }, 1000);
+    }
+
+    // 显示特殊组合动画
+    function showSpecialAnimation(text) {
+      const popup = document.createElement('div');
+      popup.className = 'special-effect';
+      popup.textContent = text;
+      
+      // 中心位置
+      const areaWidth = elements.diceArea.offsetWidth;
+      const areaHeight = elements.diceArea.offsetHeight;
+      
+      popup.style.left = `${areaWidth / 2}px`;
+      popup.style.top = `${areaHeight / 2}px`;
+      popup.style.transform = 'translate(-50%, -50%)';
+      
+      elements.diceArea.appendChild(popup);
+      
+      // 移除动画元素
+      setTimeout(() => {
+        popup.remove();
+      }, 1500);
+    }
+
+    // 显示结果
+    function showResult() {
+      elements.resultArea.classList.remove('hidden');
+      
+      // 显示骰子结果
+      let resultHTML = '<div class="flex flex-wrap justify-center gap-2 mb-4">';
+      
+      gameState.currentDice.forEach(dice => {
+        resultHTML += `
+          <div class="flex flex-col items-center">
+            <div class="dice dice-${gameState.skins.current} dice-${dice.color} mb-1"></div>
+            <span class="font-bold">${dice.point}</span>
+          </div>
+        `;
+      });
+      
+      resultHTML += '</div>';
+      
+      // 显示得分 - 直接使用calculateScore函数中的计算方式
+      const points = gameState.currentDice.map(dice => dice.point);
+      const colors = gameState.currentDice.map(dice => dice.color);
+      
+      // 计算基础得分（1和6）
+      let baseScore = 0;
+      points.forEach(point => {
+        if (point === 1 || point === 6) {
+          const multiplier = gameState.upgrades.scoreMultiplier.baseValue + 
+                            gameState.upgrades.scoreMultiplier.level * 
+                            gameState.upgrades.scoreMultiplier.valueIncrease;
+          baseScore += point * multiplier;
+        }
+      });
+      
+      let specialScore = 0;
+      let specialText = '';
+      
+      if (gameState.diceCount >= 2) {
+        // 计算特殊得分
+        specialScore = calculateSpecialScore(points, colors);
+        const multiplier = gameState.upgrades.specialMultiplier.baseValue + 
+                          gameState.upgrades.specialMultiplier.level * 
+                          gameState.upgrades.specialMultiplier.valueIncrease;
+        specialScore *= multiplier;
+        
+        // 获取特殊组合文本
+        specialText = getSpecialText(points, colors);
+      }
+      
+      const totalScore = baseScore + specialScore;
+      
+      resultHTML += `
+        <div class="bg-white/90 rounded-lg p-3">
+          <div class="flex justify-between mb-2">
+            <span>基础得分:</span>
+            <span class="font-bold">${Math.floor(baseScore)}</span>
+          </div>
+      `;
+      
+      if (specialScore > 0) {
+        resultHTML += `
+          <div class="flex justify-between mb-2">
+            <span>${specialText}:</span>
+            <span class="font-bold text-yellow-500">${Math.floor(specialScore)}</span>
+          </div>
+        `;
+      }
+      
+      resultHTML += `
+          <div class="flex justify-between border-t border-gray-200 pt-2 mt-2">
+            <span class="font-bold">总得分:</span>
+            <span class="font-bold text-primary">${Math.floor(totalScore)}</span>
+          </div>
+        </div>
+      `;
+      
+      elements.resultContent.innerHTML = resultHTML;
+      
+      // 如果有特殊组合，显示动画
+      if (specialScore > 0) {
+        showSpecialAnimation(specialText);
+      }
+    }
+
+    // 获取特殊组合文本
+    function getSpecialText(points, colors) {
+      const sortedPoints = [...points].sort((a, b) => a - b);
+      
+      // 统计点数出现次数
+      const pointCounts = {};
+      points.forEach(point => {
+        pointCounts[point] = (pointCounts[point] || 0) + 1;
+      });
+      
+      // 统计颜色出现次数
+      const colorCounts = {};
+      colors.forEach(color => {
+        colorCounts[color] = (colorCounts[color] || 0) + 1;
+      });
+      
+      // 检查特殊组合
+      const counts = Object.values(pointCounts).sort((a, b) => b - a);
+      
+      // 三对 (6个骰子)
+      if (gameState.diceCount === 6 && counts.length === 3 && counts.every(count => count === 2)) {
+        return '三对';
+      }
+      // 大同花 (5个同色)
+      else if (gameState.diceCount >= 5 && Object.values(colorCounts).some(count => count >= 5)) {
+        return '大同花';
+      }
+      // 四条
+      else if (counts[0] === 4) {
+        return '四条';
+      }
+      // 葫芦 (3+2)
+      else if (counts[0] === 3 && counts[1] === 2) {
+        return '葫芦';
+      }
+      // 顺子
+      else if (isStraight(sortedPoints)) {
+        return '顺子';
+      }
+      // 小同花 (4个同色)
+      else if (Object.values(colorCounts).some(count => count >= 4)) {
+        return '小同花';
+      }
+      // 三条
+      else if (counts[0] === 3) {
+        return '三条';
+      }
+      // 两对
+      else if (counts[0] === 2 && counts[1] === 2) {
+        return '两对';
+      }
+      // 一对
+      else if (counts[0] === 2) {
+        return '一对';
+      }
+      
+      return '';
+    }
+
+    // 升级
+    function upgrade(type) {
+      if (gameState.isRolling) return;
+      
+      const upgrade = gameState.upgrades[type];
+      
+      // 检查是否已达到最大等级
+      if (upgrade.level >= upgrade.maxLevel) return;
+      
+      // 计算成本
+      let cost;
+      if (type === 'diceCount') {
+        cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.level));
+      } else {
+        cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.level - 1));
+      }
+      
+      // 检查是否有足够的积分
+      if (gameState.score < cost) return;
+      
+      // 扣除积分
+      gameState.score -= cost;
+      
+      // 升级
+      upgrade.level++;
+      
+      // 应用效果
+      if (type === 'diceCount') {
+        gameState.diceCount++;
+        createDice();
+      }
+      
+      // 更新UI
+      updateUI();
+      
+      // 显示升级动画
+      showUpgradeAnimation(type);
+    }
+
+    // 显示升级动画
+    function showUpgradeAnimation(type) {
+      const popup = document.createElement('div');
+      popup.className = 'effect-popup text-green-500';
+      
+      let text;
+      if (type === 'diceCount') {
+        text = '骰子数量+1';
+      } else if (type === 'scoreMultiplier') {
+        const multiplier = gameState.upgrades.scoreMultiplier.baseValue + 
+                          gameState.upgrades.scoreMultiplier.level * 
+                          gameState.upgrades.scoreMultiplier.valueIncrease;
+        text = `点数倍率 x${multiplier.toFixed(1)}`;
+      } else if (type === 'specialMultiplier') {
+        const multiplier = gameState.upgrades.specialMultiplier.baseValue + 
+                          gameState.upgrades.specialMultiplier.level * 
+                          gameState.upgrades.specialMultiplier.valueIncrease;
+        text = `特殊倍率 x${multiplier.toFixed(1)}`;
+      }
+      
+      popup.textContent = text;
+      
+      // 位置
+      const shopElement = type === 'diceCount' ? elements.upgradeDiceCount : 
+                         type === 'scoreMultiplier' ? elements.upgradeScoreMultiplier : 
+                         elements.upgradeSpecialMultiplier;
+      
+      const rect = shopElement.getBoundingClientRect();
+      const areaRect = elements.diceArea.getBoundingClientRect();
+      
+      popup.style.left = `${rect.left - areaRect.left + rect.width / 2}px`;
+      popup.style.top = `${rect.top - areaRect.top}px`;
+      
+      elements.diceArea.appendChild(popup);
+      
+      // 移除动画元素
+      setTimeout(() => {
+        popup.remove();
+      }, 1000);
+    }
+
+    // 购买道具
+    function buyProp(type) {
+      return function() {
+        if (gameState.isRolling) return;
+        
+        const prop = gameState.props[type];
+        
+        // 检查是否有足够的积分
+        if (gameState.score < prop.cost) return;
+        
+        // 扣除积分
+        gameState.score -= prop.cost;
+        
+        // 增加道具数量
+        prop.count++;
+        
+        // 更新UI
+        updateUI();
+        
+        // 显示购买动画
+        showBuyAnimation(type);
+      };
+    }
+
+    // 显示购买动画
+    function showBuyAnimation(type) {
+      const popup = document.createElement('div');
+      popup.className = 'effect-popup text-blue-500';
+      
+      let text;
+      if (type === 'weightedDice') {
+        text = '获得灌铅骰子';
+      } else if (type === 'magicDice') {
+        text = '获得魔法骰子';
+      } else if (type === 'mirrorDice') {
+        text = '获得镜像骰子';
+      }
+      
+      popup.textContent = text;
+      
+      // 位置
+      const propElement = type === 'weightedDice' ? elements.propWeightedDice : 
+                         type === 'magicDice' ? elements.propMagicDice : 
+                         elements.propMirrorDice;
+      
+      const rect = propElement.getBoundingClientRect();
+      const areaRect = elements.diceArea.getBoundingClientRect();
+      
+      popup.style.left = `${rect.left - areaRect.left + rect.width / 2}px`;
+      popup.style.top = `${rect.top - areaRect.top}px`;
+      
+      elements.diceArea.appendChild(popup);
+      
+      // 移除动画元素
+      setTimeout(() => {
+        popup.remove();
+      }, 1000);
+    }
+
+    // 使用灌铅骰子
+    function useWeightedDice(point) {
+      if (gameState.isRolling || gameState.props.weightedDice.count <= 0) return;
+      
+      // 减少道具数量
+      gameState.props.weightedDice.count--;
+      
+      // 随机选择一个骰子
+      const index = Math.floor(Math.random() * gameState.currentDice.length);
+      const dice = gameState.currentDice[index];
+      
+      // 设置点数
+      dice.point = point;
+      dice.color = point % 2 === 1 ? 'blue' : 'red';
+      
+      // 应用CSS类
+      dice.element.className = `dice dice-${gameState.skins.current} dice-${dice.color}`;
+      
+      // 锁定骰子
+      dice.locked = true;
+      
+      // 添加视觉效果
+      gsap.to(dice.element, {
+        scale: 1.2,
+        boxShadow: '0 0 20px rgba(255, 215, 0, 0.8)',
+        duration: 0.5,
+        yoyo: true,
+        repeat: 1
+      });
+      
+      // 更新UI
+      updateUI();
+      
+      // 显示使用效果
+      showPropEffectAnimation(index, `设置为 ${point}`);
+    }
+
+    // 使用魔法骰子
+    function openMagicDiceModal() {
+      if (gameState.isRolling || gameState.props.magicDice.count <= 0) return;
+      
+      // 清空选择区域
+      elements.magicDiceSelection.innerHTML = '';
+      
+      // 创建骰子选择
+      gameState.currentDice.forEach((dice, index) => {
+        const diceElement = document.createElement('div');
+        diceElement.className = `dice dice-${gameState.skins.current} dice-${dice.color} cursor-pointer`;
+        diceElement.dataset.index = index;
+        
+        diceElement.addEventListener('click', () => {
+          gameState.selectedDiceIndex = index;
+          elements.magicDiceModal.classList.add('hidden');
+          elements.changePointModal.classList.remove('hidden');
+        });
+        
+        elements.magicDiceSelection.appendChild(diceElement);
+      });
+      
+      // 显示模态框
+      elements.magicDiceModal.classList.remove('hidden');
+    }
+
+    // 改变骰子点数
+    function changeDicePoint(point) {
+      if (gameState.isRolling || gameState.props.magicDice.count <= 0 || gameState.selectedDiceIndex === -1) return;
+      
+      // 减少道具数量
+      gameState.props.magicDice.count--;
+      
+      // 获取骰子
+      const dice = gameState.currentDice[gameState.selectedDiceIndex];
+      
+      // 设置点数
+      dice.point = point;
+      dice.color = point % 2 === 1 ? 'blue' : 'red';
+      
+      // 应用CSS类
+      dice.element.className = `dice dice-${gameState.skins.current} dice-${dice.color}`;
+      
+      // 锁定骰子
+      dice.locked = true;
+      
+      // 添加视觉效果
+      gsap.to(dice.element, {
+        scale: 1.2,
+        boxShadow: '0 0 20px rgba(128, 0, 128, 0.8)',
+        duration: 0.5,
+        yoyo: true,
+        repeat: 1
+      });
+      
+      // 更新UI
+      updateUI();
+      
+      // 显示使用效果
+      showPropEffectAnimation(gameState.selectedDiceIndex, `变为 ${point}`);
+      
+      // 重置选择
+      gameState.selectedDiceIndex = -1;
+    }
+
+    // 使用镜像骰子
+    function openMirrorDiceModal() {
+      if (gameState.isRolling || gameState.props.mirrorDice.count <= 0 || gameState.diceCount < 2) return;
+      
+      // 清空选择区域
+      elements.sourceDiceSelection.innerHTML = '';
+      
+      // 创建骰子选择
+      gameState.currentDice.forEach((dice, index) => {
+        const diceElement = document.createElement('div');
+        diceElement.className = `dice dice-${gameState.skins.current} dice-${dice.color} cursor-pointer`;
+        diceElement.dataset.index = index;
+        
+        diceElement.addEventListener('click', () => {
+          gameState.sourceDiceIndex = index;
+          elements.mirrorDiceModal.classList.add('hidden');
+          openTargetDiceModal();
+        });
+        
+        elements.sourceDiceSelection.appendChild(diceElement);
+      });
+      
+      // 显示模态框
+      elements.mirrorDiceModal.classList.remove('hidden');
+    }
+
+    // 打开目标骰子模态框
+    function openTargetDiceModal() {
+      // 清空选择区域
+      elements.targetDiceSelection.innerHTML = '';
+      
+      // 创建骰子选择
+      gameState.currentDice.forEach((dice, index) => {
+        // 不能选择源骰子
+        if (index === gameState.sourceDiceIndex) return;
+        
+        const diceElement = document.createElement('div');
+        diceElement.className = `dice dice-${gameState.skins.current} dice-${dice.color} cursor-pointer`;
+        diceElement.dataset.index = index;
+        
+        diceElement.addEventListener('click', () => {
+          gameState.targetDiceIndex = index;
+          elements.targetDiceModal.classList.add('hidden');
+          useMirrorDice();
+        });
+        
+        elements.targetDiceSelection.appendChild(diceElement);
+      });
+      
+      // 显示模态框
+      elements.targetDiceModal.classList.remove('hidden');
+    }
+
+    // 使用镜像骰子
+    function useMirrorDice() {
+      if (gameState.isRolling || gameState.props.mirrorDice.count <= 0 || gameState.sourceDiceIndex === -1 || gameState.targetDiceIndex === -1) return;
+      
+      // 减少道具数量
+      gameState.props.mirrorDice.count--;
+      
+      // 获取骰子
+      const sourceDice = gameState.currentDice[gameState.sourceDiceIndex];
+      const targetDice = gameState.currentDice[gameState.targetDiceIndex];
+      
+      // 复制点数
+      targetDice.point = sourceDice.point;
+      targetDice.color = sourceDice.color;
+      
+      // 应用CSS类
+      targetDice.element.className = `dice dice-${gameState.skins.current} dice-${targetDice.color}`;
+      
+      // 锁定骰子
+      targetDice.locked = true;
+      
+      // 添加视觉效果
+      gsap.to(sourceDice.element, {
+        scale: 1.2,
+        boxShadow: '0 0 20px rgba(0, 255, 255, 0.8)',
+        duration: 0.5,
+        yoyo: true,
+        repeat: 1
+      });
+      
+      gsap.to(targetDice.element, {
+        scale: 1.2,
+        boxShadow: '0 0 20px rgba(0, 255, 255, 0.8)',
+        duration: 0.5,
+        yoyo: true,
+        repeat: 1,
+        delay: 0.3
+      });
+      
+      // 绘制连接线
+      drawConnectionLine(gameState.sourceDiceIndex, gameState.targetDiceIndex);
+      
+      // 更新UI
+      updateUI();
+      
+      // 显示使用效果
+      showPropEffectAnimation(gameState.targetDiceIndex, `复制为 ${sourceDice.point}`);
+      
+      // 重置选择
+      gameState.sourceDiceIndex = -1;
+      gameState.targetDiceIndex = -1;
+    }
+
+    // 绘制连接线
+    function drawConnectionLine(sourceIndex, targetIndex) {
+      const sourceDice = gameState.currentDice[sourceIndex].element;
+      const targetDice = gameState.currentDice[targetIndex].element;
+      
+      const sourceRect = sourceDice.getBoundingClientRect();
+      const targetRect = targetDice.getBoundingClientRect();
+      const areaRect = elements.diceArea.getBoundingClientRect();
+      
+      const sourceX = sourceRect.left - areaRect.left + sourceRect.width / 2;
+      const sourceY = sourceRect.top - areaRect.top + sourceRect.height / 2;
+      const targetX = targetRect.left - areaRect.left + targetRect.width / 2;
+      const targetY = targetRect.top - areaRect.top + targetRect.height / 2;
+      
+      // 创建SVG
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.style.position = 'absolute';
+      svg.style.top = '0';
+      svg.style.left = '0';
+      svg.style.width = '100%';
+      svg.style.height = '100%';
+      svg.style.pointerEvents = 'none';
+      svg.style.zIndex = '10';
+      
+      // 创建线
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', sourceX);
+      line.setAttribute('y1', sourceY);
+      line.setAttribute('x2', sourceX);
+      line.setAttribute('y2', sourceY);
+      line.setAttribute('stroke', 'cyan');
+      line.setAttribute('stroke-width', '3');
+      line.setAttribute('stroke-dasharray', '5,5');
+      
+      svg.appendChild(line);
+      elements.diceArea.appendChild(svg);
+      
+      // 动画
+      gsap.to(line, {
+        attr: {
+          x2: targetX,
+          y2: targetY
+        },
+        duration: 0.5,
+        onComplete: () => {
+          setTimeout(() => {
+            svg.remove();
+          }, 1000);
+        }
+      });
+    }
+
+    // 显示道具效果动画
+    function showPropEffectAnimation(index, text) {
+      const dice = gameState.currentDice[index].element;
+      const rect = dice.getBoundingClientRect();
+      const areaRect = elements.diceArea.getBoundingClientRect();
+      
+      const popup = document.createElement('div');
+      popup.className = 'effect-popup text-purple-500';
+      popup.textContent = text;
+      
+      popup.style.left = `${rect.left - areaRect.left + rect.width / 2}px`;
+      popup.style.top = `${rect.top - areaRect.top - 30}px`;
+      
+      elements.diceArea.appendChild(popup);
+      
+      // 移除动画元素
+      setTimeout(() => {
+        popup.remove();
+      }, 1000);
+    }
+
+    // 购买外观
+    function buySkin(skin, cost) {
+      if (gameState.score < cost) return;
+      
+      // 扣除积分
+      gameState.score -= cost;
+      
+      // 添加到拥有列表
+      if (!gameState.skins.owned.includes(skin)) {
+        gameState.skins.owned.push(skin);
+      }
+      
+      // 更新UI
+      updateUI();
+      
+      // 显示购买动画
+      showSkinAnimation(skin, '已购买');
+    }
+
+    // 使用外观
+    function equipSkin(skin) {
+      if (!gameState.skins.owned.includes(skin)) return;
+      
+      // 设置当前外观
+      gameState.skins.current = skin;
+      
+      // 更新骰子外观
+      gameState.currentDice.forEach(dice => {
+        dice.element.className = `dice dice-${gameState.skins.current} dice-${dice.color}`;
+      });
+      
+      // 更新UI
+      updateUI();
+      
+      // 显示使用动画
+      showSkinAnimation(skin, '已装备');
+    }
+
+    // 显示外观动画
+    function showSkinAnimation(skin, text) {
+      const popup = document.createElement('div');
+      popup.className = 'effect-popup text-yellow-500';
+      popup.textContent = text;
+      
+      // 位置
+      const skinElement = document.getElementById(`skin-${skin}`);
+      const rect = skinElement.getBoundingClientRect();
+      const areaRect = elements.diceArea.getBoundingClientRect();
+      
+      popup.style.left = `${rect.left - areaRect.left + rect.width / 2}px`;
+      popup.style.top = `${rect.top - areaRect.top}px`;
+      
+      elements.diceArea.appendChild(popup);
+      
+      // 移除动画元素
+      setTimeout(() => {
+        popup.remove();
+      }, 1000);
+    }
+
+    // 初始化游戏
+    window.addEventListener('DOMContentLoaded', initGame);
+  </script>
+</body>
+</html>
