@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>骰子投掷积分游戏</title>
+  <!-- Tailwind CSS v3 -->
+  <link href="./css/output.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link href="./fontawesome-free-6.4.0-web/css/all.min.css" rel="stylesheet">
+  <!-- GSAP 动画库 -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  
+  <!-- Tailwind CSS 配置已编译到 output.css 文件中 -->
+  <style>
+      /* 骰子颜色定义 */
+      .bg-dice-blue, .bg-dice-plastic {
+        background-color: #fff;
+      }
+      .bg-dice-red {
+        background-color: #ef4444;
+      }
+      .bg-dice-copper {
+        background-color: #cb6c3b;
+      }
+      .bg-dice-iron {
+        background-color: #6b7280;
+      }
+      .bg-dice-ivory {
+        background-color: #f7f3e1;
+      }
+      .bg-dice-gold {
+        background-color: #f59e0b;
+      }
+      .bg-dice-gemstone {
+        background-color: #8b5cf6;
+      }
+      
+      /* 实用工具类 */
+      /* 骰子点数为奇数时的点颜色 */
+      .dice-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #ef4444; /* 红色 */
+        position: absolute;
+      }
+      
+      /* 骰子点数为偶数时的点颜色 */
+      .dice-even .dice-dot {
+        background-color: #3b82f6; /* 蓝色 */
+      }
+      
+      .dice-3d {
+        transform-style: preserve-3d;
+        transition: transform 1s ease-out;
+      }
+      
+      .dice-face {
+        position: absolute;
+        width: 64px;
+        height: 64px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        font-weight: bold;
+        backface-visibility: hidden;
+      }
+      
+      .dice-animation {
+        animation: diceRoll 1s ease-out forwards;
+      }
+      
+      @keyframes diceRoll {
+        0% { transform: rotateX(0deg) rotateY(0deg); }
+        100% { transform: rotateX(360deg) rotateY(720deg); }
+      }
+      
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      
+      .text-glow {
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+      }
+      
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+      
+      .dice-shadow {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 
+                    inset 0 -4px 6px -1px rgba(0, 0, 0, 0.1), inset 0 4px 6px -1px rgba(255, 255, 255, 0.5);
+      }
+      
+      .btn-3d {
+        position: relative;
+        transform: transition-all duration-150 active:translate-y-1;
+        box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.3);
+      }
+      
+      .btn-3d:active {
+        box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.3);
+      }
+      
+      .progress-bar {
+        height: 8px;
+        border-radius: 4px;
+        background-color: #e5e7eb;
+        overflow: hidden;
+      }
+      
+      .progress-value {
+        height: 100%;
+        transition: all 500ms ease-out;
+      }
+      
+      .dice-skin-preview {
+        width: 48px;
+        height: 48px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: bold;
+        margin: 0 4px;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      
+      .dice-skin-preview:hover {
+        transform: scale(1.1);
+      }
+      
+      .dice-skin-preview.active {
+        border: 2px solid #eab308;
+        transform: scale(1.1);
+      }
+      
+      .tooltip {
+        visibility: hidden;
+        position: absolute;
+        background-color: #1e293b;
+        color: white;
+        font-size: 12px;
+        border-radius: 4px;
+        padding: 4px 8px;
+        margin-top: -32px;
+        opacity: 0;
+        transition: opacity 300ms;
+        width: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+      }
+      
+      .has-tooltip:hover .tooltip {
+        visibility: visible;
+        opacity: 1;
+      }
+      
+      .special-combination {
+        animation: highlight 2s ease-in-out;
+      }
+      
+      @keyframes highlight {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+        50% { box-shadow: 0 0 0 10px rgba(234, 179, 8, 0.5); }
+      }
+      
+      .particle {
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+      }
+      
+      .confetti {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        opacity: 0;
+        animation: confetti 5s ease-in-out infinite;
+      }
+      
+      @keyframes confetti {
+        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(800px) rotate(720deg); opacity: 0; }
+      }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-dark to-gray-800 min-h-screen text-light overflow-x-hidden">
+  <!-- 背景装饰 -->
+  <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+    <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-500 rounded-full filter blur-3xl opacity-10 animate-pulse"></div>
+    <div class="absolute top-1/2 right-1/4 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl opacity-10 animate-pulse" style="animation-delay: 1s;"></div>
+    <div class="absolute bottom-1/4 left-1/3 w-80 h-80 bg-orange-500 rounded-full filter blur-3xl opacity-10 animate-pulse" style="animation-delay: 2s;"></div>
+  </div>
+
+  <!-- 主容器 -->
+  <div class="container mx-auto px-4 py-8 relative z-10">
+    <!-- 顶部导航 -->
+    <header class="flex justify-between items-center mb-8">
+      <div class="flex items-center">
+        <div class="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center mr-3 shadow-lg">
+          <i class="fa fa-dice text-white text-2xl"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-white text-shadow">骰子投掷积分游戏</h1>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center bg-gray-800 bg-opacity-50 rounded-lg px-4 py-2">
+          <i class="fa fa-coins text-yellow-400 mr-2"></i>
+          <span class="text-xl font-bold text-white" id="total-score">0</span>
+        </div>
+        
+        <button id="rules-toggle" class="bg-gray-800 bg-opacity-50 hover:bg-opacity-70 text-white px-4 py-2 rounded-lg transition-all flex items-center">
+          <i class="fa fa-book mr-2"></i>
+          <span>规则</span>
+        </button>
+      </div>
+    </header>
+    
+    <!-- 规则说明区 -->
+    <div id="rules-section" class="hidden bg-gray-900 bg-opacity-80 rounded-xl p-6 mb-8 glass-effect">
+      <h2 class="text-2xl font-bold mb-4 text-yellow-400">游戏规则</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="text-xl font-bold mb-2 text-blue-400">基础玩法</h3>
+          <ul class="list-disc list-inside space-y-2 text-gray-200" style="text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;">
+            <li>点击"投掷骰子"按钮获得骰子点数</li>
+            <li>1、3、5点为蓝色，2、4、6点为红色</li>
+            <li>投掷后1点得1分，6点得6分，其余点数不得分</li>
+            <li>初始1枚骰子，可通过商店最多额外购买5次（最多6枚骰子）</li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="text-xl font-bold mb-2 text-purple-400">特殊玩法</h3>
+          <p class="text-gray-200 mb-2">当骰子数≥2时，以下组合可获得额外积分：</p>
+          <ul class="list-disc list-inside space-y-2 text-gray-200">
+            <li><span class="text-yellow-300">一对</span>：两枚骰子点数相同</li>
+            <li><span class="text-yellow-300">两对</span>：四枚骰子为两个不同的一对</li>
+            <li><span class="text-yellow-300">三条</span>：三枚骰子点数相同</li>
+            <li><span class="text-yellow-300">小同花</span>：四枚骰子颜色相同</li>
+            <li><span class="text-yellow-300">顺子</span>：五枚骰子点数为连续数字（如1-2-3-4-5或2-3-4-5-6）</li>
+            <li><span class="text-yellow-300">葫芦</span>：五枚骰子中三枚点数相同，另外两枚点数相同</li>
+            <li><span class="text-yellow-300">四条</span>：四枚骰子点数相同</li>
+            <li><span class="text-yellow-300">大同花</span>：六枚骰子颜色相同</li>
+            <li><span class="text-yellow-300">三对</span>：六枚骰子为三个不同的一对</li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- 存档管理 -->
+      <div class="mt-8 border-t border-gray-700 pt-6">
+        <h3 class="text-xl font-bold mb-4 pt-4 text-green-300" style="padding-top:10px">存档管理</h3>
+        <div id="delete-save-container" class="flex flex-col items-center">
+          <button id="delete-save-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all mb-4 flex items-center">
+            <i class="fa fa-trash-alt mr-2"></i>
+            <span>删除游戏存档</span>
+          </button>
+          <div id="confirm-delete-container" class="hidden">
+            <p class="text-red-400 mb-4 font-bold">警告：此操作将删除所有游戏进度，且无法恢复！</p>
+            <div class="flex gap-4 justify-center">
+              <button id="confirm-delete-button" class="bg-red-500 hover:bg-red-900 text-white font-bold py-2 px-6 rounded-lg transition-all">
+                确认删除
+              </button>
+              <button id="cancel-delete-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-all">
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 主游戏区 -->
+    <div class="flex flex-col lg:flex-row gap-6">
+      <!-- 左侧游戏区 -->
+      <div class="lg:w-2/3 space-y-6">
+        <!-- 骰子显示区域 -->
+        <div class="bg-gray-900 bg-opacity-70 rounded-xl p-6 glass-effect">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-white">
+              <span id="dice-count">1</span> 枚骰子
+            </h2>
+            
+            <div class="flex items-center">
+              <span class="text-gray-300 mr-2">当前倍率：</span>
+              <span class="text-yellow-400 font-bold" id="current-multiplier">1x</span>
+            </div>
+          </div>
+          
+          <!-- 骰子容器 -->
+          <div id="dice-container" class="flex flex-wrap justify-center gap-4 md:gap-6 min-h-[200px] items-center">
+            <!-- 骰子将通过JS动态添加 -->
+            <div class="dice w-20 h-20 md:w-24 md:h-24 rounded-lg bg-dice-plastic dice-shadow flex items-center justify-center text-4xl font-bold text-white relative transition-transform hover:scale-105" data-value="1">
+              <div class="dice-dot" style="top: 25%; left: 25%;"></div>
+              <div class="dice-dot" style="top: 25%; left: 50%; transform: translateX(-50%);"></div>
+              <div class="dice-dot" style="top: 25%; left: 75%; transform: translateX(-100%);"></div>
+              <div class="dice-dot" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+              <div class="dice-dot" style="top: 75%; left: 25%; transform: translateY(-100%);"></div>
+              <div class="dice-dot" style="top: 75%; left: 50%; transform: translate(-50%, -100%);"></div>
+              <div class="dice-dot" style="top: 75%; left: 75%; transform: translate(-100%, -100%);"></div>
+            </div>
+          </div>
+          
+          <!-- 投掷按钮 -->
+          <div class="flex justify-center mt-8">
+            <button id="roll-button" class="btn-3d bg-gradient-to-b from-yellow-500 to-yellow-600 text-white font-bold text-xl py-4 px-8 rounded-full shadow-lg hover:brightness-110 active:brightness-90 flex items-center">
+              <i class="fa fa-random mr-2"></i>
+              <span>投掷骰子</span>
+            </button>
+          </div>
+          
+          <!-- 本次得分 -->
+          <div class="flex justify-center mt-4">
+            <div id="roll-score" class="text-xl font-bold text-green-400 hidden">
+              本次得分: <span>0</span>
+            </div>
+          </div>
+          
+          <!-- 特殊组合提示 -->
+          <div id="combination-message" class="flex justify-center mt-2 hidden">
+            <div class="bg-yellow-500 text-white px-4 py-2 rounded-full font-bold animate-pulse">
+              <i class="fa fa-star mr-2"></i>
+              <span>恭喜！获得特殊组合：<span id="combination-type"></span></span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 道具栏 -->
+        <div class="bg-gray-900 bg-opacity-70 rounded-xl p-6 glass-effect">
+          <h2 class="text-xl font-bold mb-4 text-white">道具栏</h2>
+          
+          <div id="items-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <!-- 灌铅骰子 -->
+            <div class="item bg-gray-800 rounded-lg p-3 cursor-pointer transition-all hover:bg-gray-700" data-item="loaded-dice">
+              <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-yellow-300">灌铅骰子</h3>
+                <span class="bg-gray-700 text-white text-xs px-2 py-1 rounded-full" id="loaded-dice-count">0</span>
+              </div>
+              <p class="text-gray-300 text-sm mb-2">使用时可指定一枚骰子本次的点数</p>
+              <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1 rounded text-sm" id="use-loaded-dice">使用</button>
+            </div>
+            
+            <!-- 魔法骰子 -->
+            <div class="item bg-gray-800 rounded-lg p-3 cursor-pointer transition-all hover:bg-gray-700" data-item="magic-dice">
+              <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-purple-300">魔法骰子</h3>
+                <span class="bg-gray-700 text-white text-xs px-2 py-1 rounded-full" id="magic-dice-count">0</span>
+              </div>
+              <p class="text-gray-300 text-sm mb-2">使用时可修改一枚已投掷骰子的结果</p>
+              <button class="w-full bg-purple-600 hover:bg-purple-700 text-white py-1 rounded text-sm" id="use-magic-dice">使用</button>
+            </div>
+            
+            <!-- 镜像骰子 -->
+            <div class="item bg-gray-800 rounded-lg p-3 cursor-pointer transition-all hover:bg-gray-700" data-item="mirror-dice">
+              <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-green-300">镜像骰子</h3>
+                <span class="bg-gray-700 text-white text-xs px-2 py-1 rounded-full" id="mirror-dice-count">0</span>
+              </div>
+              <p class="text-gray-300 text-sm mb-2">使用时可将一枚骰子的结果修改为另一枚的结果</p>
+              <button class="w-full bg-green-600 hover:bg-green-700 text-white py-1 rounded text-sm" id="use-mirror-dice">使用</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 骰子外观展示区 -->
+        <div class="bg-gray-900 bg-opacity-70 rounded-xl p-6 glass-effect">
+          <h2 class="text-xl font-bold mb-4 text-white">骰子外观</h2>
+          
+          <div class="flex flex-wrap justify-center items-center gap-4">
+            <div class="dice-skin-preview dice-shadow bg-dice-plastic text-gray-800 opacity-50" data-skin="plastic" data-level="0">
+              <i class="fa fa-dice"></i>
+            </div>
+            <div class="dice-skin-preview dice-shadow bg-dice-copper text-white opacity-50" data-skin="copper" data-level="1">
+              <i class="fa fa-dice"></i>
+            </div>
+            <div class="dice-skin-preview dice-shadow bg-dice-iron text-white opacity-50" data-skin="iron" data-level="2">
+              <i class="fa fa-dice"></i>
+            </div>
+            <div class="dice-skin-preview dice-shadow bg-dice-ivory text-gray-800 opacity-50" data-skin="ivory" data-level="3">
+              <i class="fa fa-dice"></i>
+            </div>
+            <div class="dice-skin-preview dice-shadow bg-dice-gold text-white opacity-50" data-skin="gold" data-level="4">
+              <i class="fa fa-dice"></i>
+            </div>
+            <div class="dice-skin-preview dice-shadow bg-dice-gemstone text-white opacity-50" data-skin="gemstone" data-level="5">
+              <i class="fa fa-dice"></i>
+            </div>
+          </div>
+          
+          <div class="mt-4 text-center">
+            <p class="text-gray-300">当前外观：<span id="current-skin-name" class="text-yellow-300 font-bold">塑料</span></p>
+            <p class="text-gray-400 text-sm">下一级：<span id="next-skin-name">铜</span>，价格：<span id="next-skin-price">100</span>积分</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 右侧商店区域 -->
+      <div class="lg:w-1/3">
+        <div class="bg-gray-900 bg-opacity-70 rounded-xl p-6 glass-effect sticky top-4">
+          <h2 class="text-2xl font-bold mb-6 text-white flex items-center">
+            <i class="fa fa-store mr-2 text-yellow-400"></i>
+            商店
+          </h2>
+          
+          <!-- 商店项目 -->
+          <div class="space-y-6">
+            <!-- 增加骰子 -->
+            <div class="shop-item">
+              <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-xl text-blue-300">增加骰子</h3>
+                <span class="bg-blue-900 bg-opacity-50 text-blue-300 px-2 py-1 rounded-full text-sm">
+                  已拥有: <span id="owned-dice">1</span>/6
+                </span>
+              </div>
+              <p class="text-gray-300 text-sm mb-3">增加一枚骰子，最多可增加5枚</p>
+              
+              <div class="flex justify-between items-center">
+                <span class="text-yellow-400 font-bold">价格: <span id="dice-price">50</span> 积分</span>
+                <button id="buy-dice" class="btn-3d bg-gradient-to-b from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:brightness-110 active:brightness-90">
+                  购买
+                </button>
+              </div>
+            </div>
+            
+            <!-- 基础倍率升级 -->
+            <div class="shop-item">
+              <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-xl text-green-300">基础倍率升级</h3>
+                <span class="bg-green-900 bg-opacity-50 text-green-300 px-2 py-1 rounded-full text-sm">
+                  当前: <span id="base-multiplier-level">1</span>x
+                </span>
+              </div>
+              <p class="text-gray-300 text-sm mb-3">提升投掷到1或6时的积分倍率</p>
+              
+              <div class="flex justify-between items-center">
+                <span class="text-yellow-400 font-bold">价格: <span id="base-multiplier-price">100</span> 积分</span>
+                <button id="buy-base-multiplier" class="btn-3d bg-gradient-to-b from-green-500 to-green-600 text-white px-4 py-2 rounded-lg hover:brightness-110 active:brightness-90">
+                  升级
+                </button>
+              </div>
+            </div>
+            
+            <!-- 特殊倍率升级 -->
+            <div class="shop-item">
+              <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-xl text-purple-300">特殊倍率升级</h3>
+                <span class="bg-purple-900 bg-opacity-50 text-purple-300 px-2 py-1 rounded-full text-sm">
+                  当前: <span id="special-multiplier-level">1</span>x
+                </span>
+              </div>
+              <p class="text-gray-300 text-sm mb-3">提升特殊组合玩法的积分倍率</p>
+              
+              <div class="flex justify-between items-center">
+                <span class="text-yellow-400 font-bold">价格: <span id="special-multiplier-price">200</span> 积分</span>
+                <button id="buy-special-multiplier" class="btn-3d bg-gradient-to-b from-purple-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:brightness-110 active:brightness-90" disabled>
+                  升级
+                </button>
+              </div>
+            </div>
+            
+            <!-- 道具购买 -->
+            <div class="shop-item">
+              <h3 class="font-bold text-xl text-yellow-300 mb-3">道具购买</h3>
+              
+              <!-- 灌铅骰子 -->
+              <div class="flex justify-between items-center mb-3">
+                <div>
+                  <p class="text-yellow-300 font-medium">灌铅骰子</p>
+                  <p class="text-gray-400 text-xs">使用时可指定一枚骰子本次的点数</p>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-yellow-400 font-bold mr-3">价格: 150</span>
+                  <button id="buy-loaded-dice" class="btn-3d bg-gradient-to-b from-yellow-500 to-yellow-600 text-white px-3 py-1 rounded text-sm hover:brightness-110 active:brightness-90">
+                    购买
+                  </button>
+                </div>
+              </div>
+              
+              <!-- 魔法骰子 -->
+              <div class="flex justify-between items-center mb-3">
+                <div>
+                  <p class="text-purple-300 font-medium">魔法骰子</p>
+                  <p class="text-gray-400 text-xs">使用时可修改一枚已投掷骰子的结果</p>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-yellow-400 font-bold mr-3">价格: 250</span>
+                  <button id="buy-magic-dice" class="btn-3d bg-gradient-to-b from-purple-500 to-purple-600 text-white px-3 py-1 rounded text-sm hover:brightness-110 active:brightness-90">
+                    购买
+                  </button>
+                </div>
+              </div>
+              
+              <!-- 镜像骰子 -->
+              <div class="flex justify-between items-center">
+                <div>
+                  <p class="text-green-300 font-medium">镜像骰子</p>
+                  <p class="text-gray-400 text-xs mr-2">使用时可将一枚骰子的结果修改为另一枚的结果</p>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-yellow-400 font-bold mr-3">价格: 200</span>
+                  <button id="buy-mirror-dice" class="btn-3d bg-gradient-to-b from-green-500 to-green-600 text-white px-3 py-1 rounded text-sm hover:brightness-110 active:brightness-90">
+                    购买
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 骰子外观升级 -->
+            <div class="shop-item">
+              <h3 class="font-bold text-xl text-orange-300 mb-3">骰子外观升级</h3>
+              
+              <div class="flex justify-between items-center">
+                <div>
+                  <p class="text-orange-300 font-medium">升级到: <span id="upgrade-skin-name">铜</span></p>
+                  <p class="text-gray-400 text-xs">仅改变外观，无功能影响</p>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-yellow-400 font-bold mr-3">价格: <span id="skin-upgrade-price">100</span></span>
+                  <button id="buy-skin-upgrade" class="btn-3d bg-gradient-to-b from-orange-500 to-orange-600 text-white px-3 py-1 rounded text-sm hover:brightness-110 active:brightness-90">
+                    升级
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 模态框 - 灌铅骰子 -->
+  <div id="loaded-dice-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-gray-900 rounded-xl p-6 max-w-md w-full glass-effect">
+      <h2 class="text-2xl font-bold mb-4 text-yellow-300">选择骰子点数</h2>
+      <p class="text-gray-300 mb-6">请选择一枚骰子并指定其点数</p>
+      
+      <div id="dice-selection" class="flex flex-wrap justify-center gap-4 mb-6">
+        <!-- 骰子选择将通过JS动态添加 -->
+      </div>
+      
+      <div class="flex justify-center gap-4 mb-6">
+        <button class="number-btn w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center text-xl font-bold text-white hover:bg-gray-700" data-number="1">1</button>
+        <button class="number-btn w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center text-xl font-bold text-white hover:bg-gray-700" data-number="2">2</button>
+        <button class="number-btn w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center text-xl font-bold text-white hover:bg-gray-700" data-number="3">3</button>
+        <button class="number-btn w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center text-xl font-bold text-white hover:bg-gray-700" data-number="4">4</button>
+        <button class="number-btn w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center text-xl font-bold text-white hover:bg-gray-700" data-number="5">5</button>
+        <button class="number-btn w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center text-xl font-bold text-white hover:bg-gray-700" data-number="6">6</button>
+      </div>
+      
+      <div class="flex justify-end gap-3">
+        <button id="cancel-loaded-dice" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">取消</button>
+        <button id="confirm-loaded-dice" class="btn-3d bg-gradient-to-b from-yellow-500 to-yellow-600 text-white px-4 py-2 rounded-lg hover:brightness-110 active:brightness-90" disabled>确认</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 模态框 - 魔法骰子 -->
+  <div id="magic-dice-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-gray-900 rounded-xl p-6 max-w-md w-full glass-effect">
+      <h2 class="text-2xl font-bold mb-4 text-purple-300">修改骰子点数</h2>
+      <p class="text-gray-300 mb-6">请选择一枚已投掷的骰子并修改其点数</p>
+      
+      <div id="rolled-dice-selection" class="flex flex-wrap justify-center gap-4 mb-6">
+        <!-- 已投掷骰子选择将通过JS动态添加 -->
+      </div>
+      
+      <div class="flex justify-center gap-4 mb-6">
+        <button class="magic-number-btn w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center text-xl font-bold text-white hover:bg-gray-700" data-number="1">1</button>
+        <button class="magic-number-btn w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center text-xl font-bold text-white hover:bg-gray-700" data-number="2">2</button>
+        <button class="magic-number-btn w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center text-xl font-bold text-white hover:bg-gray-700" data-number="3">3</button>
+        <button class="magic-number-btn w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center text-xl font-bold text-white hover:bg-gray-700" data-number="4">4</button>
+        <button class="magic-number-btn w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center text-xl font-bold text-white hover:bg-gray-700" data-number="5">5</button>
+        <button class="magic-number-btn w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center text-xl font-bold text-white hover:bg-gray-700" data-number="6">6</button>
+      </div>
+      
+      <div class="flex justify-end gap-3">
+        <button id="cancel-magic-dice" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">取消</button>
+        <button id="confirm-magic-dice" class="btn-3d bg-gradient-to-b from-purple-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:brightness-110 active:brightness-90" disabled>确认</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 模态框 - 镜像骰子 -->
+  <div id="mirror-dice-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-gray-900 rounded-xl p-6 max-w-md w-full glass-effect">
+      <h2 class="text-2xl font-bold mb-4 text-green-300">镜像骰子</h2>
+      <p class="text-gray-300 mb-6">请选择一枚源骰子和一枚目标骰子，将目标骰子的点数修改为源骰子的点数</p>
+      
+      <div class="mb-6">
+        <p class="text-gray-300 mb-3">源骰子（被复制的骰子）：</p>
+        <div id="source-dice-selection" class="flex flex-wrap justify-center gap-4">
+          <!-- 源骰子选择将通过JS动态添加 -->
+        </div>
+      </div>
+      
+      <div class="mb-6">
+        <p class="text-gray-300 mb-3">目标骰子（被修改的骰子）：</p>
+        <div id="target-dice-selection" class="flex flex-wrap justify-center gap-4">
+          <!-- 目标骰子选择将通过JS动态添加 -->
+        </div>
+      </div>
+      
+      <div class="flex justify-end gap-3">
+        <button id="cancel-mirror-dice" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">取消</button>
+        <button id="confirm-mirror-dice" class="btn-3d bg-gradient-to-b from-green-500 to-green-600 text-white px-4 py-2 rounded-lg hover:brightness-110 active:brightness-90" disabled>确认</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 通知提示 -->
+  <div id="notification" class="fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center">
+    <i id="notification-icon" class="fa fa-info-circle mr-2"></i>
+    <span id="notification-message">通知内容</span>
+  </div>
+
+  <script>
+    // 游戏状态
+    const gameState = {
+      score: 1000000,
+      diceCount: 1,
+      maxDiceCount: 6,
+      baseMultiplier: 1,
+      maxBaseMultiplier: 5,
+      specialMultiplier: 1,
+      maxSpecialMultiplier: 5,
+      diceValues: [],
+      isRolling: false,
+      diceSkin: 0, // 当前使用的皮肤等级
+      maxDiceSkin: 0, // 用户拥有的最高皮肤等级
+      items: {
+        loadedDice: 0,
+        magicDice: 0,
+        mirrorDice: 0
+      },
+      selectedDiceIndex: -1,
+      selectedNumber: -1,
+      selectedSourceDiceIndex: -1,
+      selectedTargetDiceIndex: -1,
+      usingLoadedDice: false,
+      diceSkinPrices: [100, 200, 300, 500, 1000],
+      dicePrices: [50, 100, 200, 400, 800],
+      baseMultiplierPrices: [100, 200, 400, 800, 1600],
+      specialMultiplierPrices: [200, 400, 800, 1600, 3200],
+      itemPrices: {
+        loadedDice: 150,
+        magicDice: 250,
+        mirrorDice: 200
+      },
+      skinNames: ['塑料', '铜', '铁', '象牙', '金', '宝石']
+    };
+    
+    // DOM 元素
+    const elements = {
+      totalScore: document.getElementById('total-score'),
+      diceCount: document.getElementById('dice-count'),
+      ownedDice: document.getElementById('owned-dice'),
+      diceContainer: document.getElementById('dice-container'),
+      rollButton: document.getElementById('roll-button'),
+      rollScore: document.getElementById('roll-score'),
+      combinationMessage: document.getElementById('combination-message'),
+      combinationType: document.getElementById('combination-type'),
+      rulesToggle: document.getElementById('rules-toggle'),
+      rulesSection: document.getElementById('rules-section'),
+      currentMultiplier: document.getElementById('current-multiplier'),
+      baseMultiplierLevel: document.getElementById('base-multiplier-level'),
+      specialMultiplierLevel: document.getElementById('special-multiplier-level'),
+      dicePrice: document.getElementById('dice-price'),
+      baseMultiplierPrice: document.getElementById('base-multiplier-price'),
+      specialMultiplierPrice: document.getElementById('special-multiplier-price'),
+      buyDice: document.getElementById('buy-dice'),
+      buyBaseMultiplier: document.getElementById('buy-base-multiplier'),
+      buySpecialMultiplier: document.getElementById('buy-special-multiplier'),
+      buyLoadedDice: document.getElementById('buy-loaded-dice'),
+      buyMagicDice: document.getElementById('buy-magic-dice'),
+      buyMirrorDice: document.getElementById('buy-mirror-dice'),
+      loadedDiceCount: document.getElementById('loaded-dice-count'),
+      magicDiceCount: document.getElementById('magic-dice-count'),
+      mirrorDiceCount: document.getElementById('mirror-dice-count'),
+      useLoadedDice: document.getElementById('use-loaded-dice'),
+      useMagicDice: document.getElementById('use-magic-dice'),
+      useMirrorDice: document.getElementById('use-mirror-dice'),
+      loadedDiceModal: document.getElementById('loaded-dice-modal'),
+      magicDiceModal: document.getElementById('magic-dice-modal'),
+      mirrorDiceModal: document.getElementById('mirror-dice-modal'),
+      diceSelection: document.getElementById('dice-selection'),
+      rolledDiceSelection: document.getElementById('rolled-dice-selection'),
+      sourceDiceSelection: document.getElementById('source-dice-selection'),
+      targetDiceSelection: document.getElementById('target-dice-selection'),
+      numberBtns: document.querySelectorAll('.number-btn'),
+      magicNumberBtns: document.querySelectorAll('.magic-number-btn'),
+      cancelLoadedDice: document.getElementById('cancel-loaded-dice'),
+      confirmLoadedDice: document.getElementById('confirm-loaded-dice'),
+      cancelMagicDice: document.getElementById('cancel-magic-dice'),
+      confirmMagicDice: document.getElementById('confirm-magic-dice'),
+      cancelMirrorDice: document.getElementById('cancel-mirror-dice'),
+      confirmMirrorDice: document.getElementById('confirm-mirror-dice'),
+      currentSkinName: document.getElementById('current-skin-name'),
+      nextSkinName: document.getElementById('next-skin-name'),
+      nextSkinPrice: document.getElementById('next-skin-price'),
+      upgradeSkinName: document.getElementById('upgrade-skin-name'),
+      skinUpgradePrice: document.getElementById('skin-upgrade-price'),
+      buySkinUpgrade: document.getElementById('buy-skin-upgrade'),
+      notification: document.getElementById('notification'),
+      notificationIcon: document.getElementById('notification-icon'),
+      notificationMessage: document.getElementById('notification-message'),
+      diceSkinPreviews: document.querySelectorAll('.dice-skin-preview')
+    };
+    
+    // 初始化游戏
+    function initGame() {
+      updateUI();
+      createDice();
+      setupEventListeners();
+    }
+    
+    // 创建骰子
+    function createDice() {
+      elements.diceContainer.innerHTML = '';
+      
+      for (let i = 0; i < gameState.diceCount; i++) {
+        const dice = document.createElement('div');
+        const value = gameState.diceValues[i] || 1;
+        const isEven = value % 2 === 0;
+        dice.className = `dice w-20 h-20 md:w-24 md:h-24 rounded-lg bg-dice-plastic dice-shadow flex items-center justify-center text-4xl font-bold text-white relative transition-transform hover:scale-105 ${isEven ? 'dice-even' : ''}`;
+        dice.dataset.index = i;
+        dice.dataset.value = value;
+        
+        // 添加骰子点数
+        const dots = createDiceDots(value);
+        dice.innerHTML = dots;
+        
+        elements.diceContainer.appendChild(dice);
+      }
+      
+      updateDiceSkins();
+    }
+    
+    // 创建骰子点数
+    function createDiceDots(value) {
+      let dots = '';
+      
+      // 根据点数添加不同位置的点
+      switch(value) {
+        case 1:
+          dots = `<div class="dice-dot" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>`;
+          break;
+        case 2:
+          dots = `
+            <div class="dice-dot" style="top: 25%; left: 25%;"></div>
+            <div class="dice-dot" style="top: 75%; left: 75%; transform: translate(-100%, -100%);"></div>
+          `;
+          break;
+        case 3:
+          dots = `
+            <div class="dice-dot" style="top: 25%; left: 25%;"></div>
+            <div class="dice-dot" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+            <div class="dice-dot" style="top: 75%; left: 75%; transform: translate(-100%, -100%);"></div>
+          `;
+          break;
+        case 4:
+          dots = `
+            <div class="dice-dot" style="top: 25%; left: 25%;"></div>
+            <div class="dice-dot" style="top: 25%; left: 75%; transform: translateX(-100%);"></div>
+            <div class="dice-dot" style="top: 75%; left: 25%; transform: translateY(-100%);"></div>
+            <div class="dice-dot" style="top: 75%; left: 75%; transform: translate(-100%, -100%);"></div>
+          `;
+          break;
+        case 5:
+          dots = `
+            <div class="dice-dot" style="top: 25%; left: 25%;"></div>
+            <div class="dice-dot" style="top: 25%; left: 75%; transform: translateX(-100%);"></div>
+            <div class="dice-dot" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+            <div class="dice-dot" style="top: 75%; left: 25%; transform: translateY(-100%);"></div>
+            <div class="dice-dot" style="top: 75%; left: 75%; transform: translate(-100%, -100%);"></div>
+          `;
+          break;
+        case 6:
+          dots = `
+            <div class="dice-dot" style="top: 25%; left: 25%;"></div>
+            <div class="dice-dot" style="top: 50%; left: 25%; transform: translateY(-50%);""></div>
+            <div class="dice-dot" style="top: 25%; left: 75%; transform: translateX(-100%);"></div>
+            <div class="dice-dot" style="top: 75%; left: 25%; transform: translateY(-100%);"></div>
+            <div class="dice-dot" style="top: 50%; left: 75%; transform: translate(-100%, -50%);"></div>
+            <div class="dice-dot" style="top: 75%; left: 75%; transform: translate(-100%, -100%);"></div>
+          `;
+          break;
+      }
+      
+      return dots;
+    }
+    
+    // 更新骰子外观
+    function updateDiceSkins() {
+      const diceElements = document.querySelectorAll('.dice');
+      const skinClass = `bg-dice-${getSkinName(gameState.diceSkin)}`;
+      
+      diceElements.forEach(dice => {
+        // 移除所有皮肤类
+        dice.classList.remove('bg-dice-plastic', 'bg-dice-copper', 'bg-dice-iron', 'bg-dice-ivory', 'bg-dice-gold', 'bg-dice-gemstone');
+        // 添加当前皮肤类
+        dice.classList.add(skinClass);
+        
+        // // 根据点数更新颜色
+        // const value = parseInt(dice.dataset.value);
+        // if (value % 2 === 1) {
+        //   dice.classList.add('text-white');
+        //   dice.classList.remove('text-gray-800');
+        // } else {
+        //   if (gameState.diceSkin === 3) { // 象牙色骰子
+        //     dice.classList.add('text-gray-800');
+        //     dice.classList.remove('text-white');
+        //   } else {
+        //     dice.classList.add('text-white');
+        //     dice.classList.remove('text-gray-800');
+        //   }
+        // }
+      });
+      
+      // 更新皮肤预览
+      elements.diceSkinPreviews.forEach(preview => {
+        const level = parseInt(preview.dataset.level);
+        if (level <= gameState.maxDiceSkin) {
+          preview.classList.remove('opacity-50');
+          if (level === gameState.diceSkin) {
+            preview.classList.add('active');
+          } else {
+            preview.classList.remove('active');
+          }
+        } else {
+          preview.classList.add('opacity-50');
+          preview.classList.remove('active');
+        }
+      });
+    }
+    
+    // 获取皮肤名称
+    function getSkinName(skinIndex) {
+      const skinNames = ['plastic', 'copper', 'iron', 'ivory', 'gold', 'gemstone'];
+      return skinNames[skinIndex];
+    }
+    
+    // 设置事件监听器
+    function setupEventListeners() {
+      // 投掷按钮
+      elements.rollButton.addEventListener('click', rollDice);
+      
+      // 规则切换
+  elements.rulesToggle.addEventListener('click', () => {
+    elements.rulesSection.classList.toggle('hidden');
+  });
+  
+  // 删除存档相关元素
+  const deleteSaveButton = document.getElementById('delete-save-button');
+  const confirmDeleteContainer = document.getElementById('confirm-delete-container');
+  const confirmDeleteButton = document.getElementById('confirm-delete-button');
+  const cancelDeleteButton = document.getElementById('cancel-delete-button');
+  
+  // 第一次点击删除按钮，显示确认界面
+  deleteSaveButton.addEventListener('click', () => {
+    confirmDeleteContainer.classList.remove('hidden');
+    deleteSaveButton.classList.add('opacity-50', 'cursor-not-allowed');
+    deleteSaveButton.disabled = true;
+  });
+  
+  // 取消删除
+  cancelDeleteButton.addEventListener('click', () => {
+    confirmDeleteContainer.classList.add('hidden');
+    deleteSaveButton.classList.remove('opacity-50', 'cursor-not-allowed');
+    deleteSaveButton.disabled = false;
+  });
+  
+  // 确认删除存档
+  confirmDeleteButton.addEventListener('click', () => {
+    // 删除localStorage中的游戏数据
+    localStorage.removeItem('diceGameState');
+    
+    // 重新加载页面
+    location.reload();
+  });
+      
+      // 商店购买按钮
+      elements.buyDice.addEventListener('click', buyDice);
+      elements.buyBaseMultiplier.addEventListener('click', buyBaseMultiplier);
+      elements.buySpecialMultiplier.addEventListener('click', buySpecialMultiplier);
+      elements.buyLoadedDice.addEventListener('click', () => buyItem('loadedDice'));
+      elements.buyMagicDice.addEventListener('click', () => buyItem('magicDice'));
+      elements.buyMirrorDice.addEventListener('click', () => buyItem('mirrorDice'));
+      elements.buySkinUpgrade.addEventListener('click', buySkinUpgrade);
+    
+    // 添加点击皮肤预览更换皮肤的功能
+    elements.diceSkinPreviews.forEach(preview => {
+      preview.addEventListener('click', () => {
+        const level = parseInt(preview.dataset.level);
+        // 只有当用户已经拥有该皮肤时才能切换
+        if (level <= gameState.maxDiceSkin) {
+          gameState.diceSkin = level;
+          updateDiceSkins();
+          // 更新当前皮肤名称显示
+          elements.currentSkinName.textContent = gameState.skinNames[gameState.diceSkin];
+          // 保存游戏状态
+          saveGame();
+        }
+      });
+    });
+      
+      // 道具使用按钮
+      elements.useLoadedDice.addEventListener('click', useLoadedDice);
+      elements.useMagicDice.addEventListener('click', useMagicDice);
+      elements.useMirrorDice.addEventListener('click', useMirrorDice);
+      
+      // 灌铅骰子模态框
+      elements.cancelLoadedDice.addEventListener('click', () => {
+        elements.loadedDiceModal.classList.add('hidden');
+        gameState.usingLoadedDice = false;
+        gameState.selectedDiceIndex = -1;
+        gameState.selectedNumber = -1;
+      });
+      
+      elements.confirmLoadedDice.addEventListener('click', confirmLoadedDice);
+      
+      // 魔法骰子模态框
+      elements.cancelMagicDice.addEventListener('click', () => {
+        elements.magicDiceModal.classList.add('hidden');
+        gameState.selectedDiceIndex = -1;
+        gameState.selectedNumber = -1;
+      });
+      
+      elements.confirmMagicDice.addEventListener('click', confirmMagicDice);
+      
+      // 镜像骰子模态框
+      elements.cancelMirrorDice.addEventListener('click', () => {
+        elements.mirrorDiceModal.classList.add('hidden');
+        gameState.selectedSourceDiceIndex = -1;
+        gameState.selectedTargetDiceIndex = -1;
+      });
+      
+      elements.confirmMirrorDice.addEventListener('click', confirmMirrorDice);
+      
+      // 数字按钮
+      elements.numberBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const number = parseInt(btn.dataset.number);
+          gameState.selectedNumber = number;
+          
+          // 更新按钮样式
+          elements.numberBtns.forEach(b => b.classList.remove('bg-blue-600'));
+          btn.classList.add('bg-blue-600');
+          
+          // 启用确认按钮
+          elements.confirmLoadedDice.disabled = false;
+        });
+      });
+      
+      // 魔法数字按钮
+      elements.magicNumberBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const number = parseInt(btn.dataset.number);
+          gameState.selectedNumber = number;
+          
+          // 更新按钮样式
+          elements.magicNumberBtns.forEach(b => b.classList.remove('bg-purple-600'));
+          btn.classList.add('bg-purple-600');
+          
+          // 启用确认按钮
+          elements.confirmMagicDice.disabled = false;
+        });
+      });
+    }
+    
+    // 投掷骰子
+    function rollDice() {
+      if (gameState.isRolling) return;
+      
+      gameState.isRolling = true;
+      elements.rollButton.disabled = true;
+      elements.rollButton.classList.add('opacity-50');
+      
+      // 隐藏得分和组合消息
+      elements.rollScore.classList.add('hidden');
+      elements.combinationMessage.classList.add('hidden');
+      
+      // 重置骰子值
+      gameState.diceValues = [];
+      
+      // 获取所有骰子元素
+      const diceElements = document.querySelectorAll('.dice');
+      
+      // 为每个骰子添加动画
+      diceElements.forEach((dice, index) => {
+        // 添加摇动动画
+        dice.classList.add('animate-shake-dice');
+        
+        // 设置随机延迟
+        const delay = Math.random() * 0.5;
+        
+        // 延迟后停止动画并显示随机点数
+        setTimeout(() => {
+          // 停止动画
+          dice.classList.remove('animate-shake-dice');
+          
+          // 生成随机点数
+          let value = Math.floor(Math.random() * 6) + 1;
+          
+          // 如果使用灌铅骰子且是选中的骰子
+          if (gameState.usingLoadedDice && index === gameState.selectedDiceIndex) {
+            value = gameState.selectedNumber;
+          }
+          
+          // 保存骰子值
+          gameState.diceValues[index] = value;
+          
+          // 更新骰子显示
+          dice.dataset.value = value;
+          dice.innerHTML = createDiceDots(value);
+          
+          // 根据点数奇偶性更新骰子点颜色类
+          if (value % 2 === 0) {
+            dice.classList.add('dice-even');
+          } else {
+            dice.classList.remove('dice-even');
+          }
+          
+          // // 根据点数更新颜色
+          // if (value % 2 === 1) {
+          //   dice.classList.add('text-white');
+          //   dice.classList.remove('text-gray-800');
+          // } else {
+          //   if (gameState.diceSkin === 3) { // 象牙色骰子
+          //     dice.classList.add('text-gray-800');
+          //     dice.classList.remove('text-white');
+          //   } else {
+          //     dice.classList.add('text-white');
+          //     dice.classList.remove('text-gray-800');
+          //   }
+          // }
+          
+          // 检查是否所有骰子都已停止
+          if (index === diceElements.length - 1) {
+            setTimeout(() => {
+              calculateScore();
+              gameState.isRolling = false;
+              elements.rollButton.disabled = false;
+              elements.rollButton.classList.remove('opacity-50');
+              gameState.usingLoadedDice = false;
+            }, 500);
+          }
+        }, 1000 + delay * 1000);
+      });
+    }
+    
+    // 计算得分
+    function calculateScore() {
+      let score = 0;
+      let combination = null;
+      
+      // 基础得分（1和6点）
+      gameState.diceValues.forEach(value => {
+        if (value === 1 || value === 6) {
+          score += value * gameState.baseMultiplier;
+        }
+      });
+      
+      // 特殊组合得分
+      if (gameState.diceCount >= 2) {
+        combination = checkCombinations();
+        
+        if (combination) {
+          score += combination.score * gameState.specialMultiplier;
+        }
+      }
+      
+      // 更新总分
+      gameState.score += score;
+      
+      // 更新UI
+      elements.totalScore.textContent = gameState.score;
+      elements.rollScore.querySelector('span').textContent = score;
+      elements.rollScore.classList.remove('hidden');
+      
+      // 显示特殊组合消息
+      if (combination) {
+        elements.combinationType.textContent = combination.name;
+        elements.combinationMessage.classList.remove('hidden');
+        
+        // 添加特殊效果
+        createParticles();
+      }
+      
+      // 保存游戏状态
+      saveGame();
+    }
+    
+    // 检查特殊组合
+    function checkCombinations() {
+      const values = [...gameState.diceValues].sort((a, b) => a - b);
+      const counts = {};
+      const colors = values.map(v => v % 2 === 1 ? 'blue' : 'red');
+      const colorCounts = { blue: 0, red: 0 };
+      
+      // 计算每个点数的出现次数
+      values.forEach(value => {
+        counts[value] = (counts[value] || 0) + 1;
+      });
+      
+      // 计算每种颜色的出现次数
+      colors.forEach(color => {
+        colorCounts[color]++;
+      });
+      
+      // 转换为数组以便排序
+      const countValues = Object.values(counts).sort((a, b) => b - a);
+      
+      // 检查三对（6个骰子）
+      if (gameState.diceCount === 6 && countValues.length === 3 && countValues.every(v => v === 2)) {
+        return { name: '三对', score: 30 };
+      }
+      
+      // 检查大同花（6个骰子，颜色相同）
+      if (gameState.diceCount === 6 && (colorCounts.blue === 6 || colorCounts.red === 6)) {
+        return { name: '大同花', score: 50 };
+      }
+      
+      // 检查四条（4个骰子相同）
+      if (countValues.includes(4)) {
+        return { name: '四条', score: 40 };
+      }
+      
+      // 检查葫芦（3个相同 + 2个相同，共5个骰子）
+      if (gameState.diceCount === 5 && countValues[0] === 3 && countValues[1] === 2) {
+        return { name: '葫芦', score: 35 };
+      }
+      
+      // 检查顺子（5个连续数字）
+      if (gameState.diceCount === 5) {
+        const uniqueValues = [...new Set(values)];
+        if (uniqueValues.length === 5 && 
+            (uniqueValues.join(',') === '1,2,3,4,5' || 
+             uniqueValues.join(',') === '2,3,4,5,6')) {
+          return { name: '顺子', score: 25 };
+        }
+      }
+      
+      // 检查小同花（4个骰子颜色相同）
+      if (gameState.diceCount >= 4 && (colorCounts.blue >= 4 || colorCounts.red >= 4)) {
+        return { name: '小同花', score: 20 };
+      }
+      
+      // 检查三条（3个骰子相同）
+      if (countValues.includes(3)) {
+        return { name: '三条', score: 15 };
+      }
+      
+      // 检查两对（2个相同 + 2个相同，共4个骰子）
+      if (gameState.diceCount >= 4 && countValues[0] === 2 && countValues[1] === 2) {
+        return { name: '两对', score: 10 };
+      }
+      
+      // 检查一对（2个骰子相同）
+      if (countValues.includes(2)) {
+        return { name: '一对', score: 5 };
+      }
+      
+      return null;
+    }
+    
+    // 购买骰子
+    function buyDice() {
+      if (gameState.diceCount >= gameState.maxDiceCount) {
+        showNotification('info', '已拥有最大数量的骰子');
+        return;
+      }
+      
+      const priceIndex = gameState.diceCount - 1;
+      const price = gameState.dicePrices[priceIndex];
+      
+      if (gameState.score >= price) {
+        gameState.score -= price;
+        gameState.diceCount++;
+        
+        createDice();
+        updateUI();
+        showNotification('success', '成功购买一枚骰子');
+        
+        // 解锁特殊倍率升级（当骰子数达到2时）
+        if (gameState.diceCount >= 2) {
+          elements.buySpecialMultiplier.disabled = false;
+        }
+      } else {
+        showNotification('error', '积分不足');
+      }
+    }
+    
+    // 购买基础倍率升级
+    function buyBaseMultiplier() {
+      if (gameState.baseMultiplier >= gameState.maxBaseMultiplier) {
+        showNotification('info', '已达到最大基础倍率');
+        return;
+      }
+      
+      const priceIndex = gameState.baseMultiplier - 1;
+      const price = gameState.baseMultiplierPrices[priceIndex];
+      
+      if (gameState.score >= price) {
+        gameState.score -= price;
+        gameState.baseMultiplier++;
+        
+        updateUI();
+        showNotification('success', '基础倍率升级成功');
+      } else {
+        showNotification('error', '积分不足');
+      }
+    }
+    
+    // 购买特殊倍率升级
+    function buySpecialMultiplier() {
+      if (gameState.specialMultiplier >= gameState.maxSpecialMultiplier) {
+        showNotification('info', '已达到最大特殊倍率');
+        return;
+      }
+      
+      if (gameState.diceCount < 2) {
+        showNotification('info', '需要至少2枚骰子才能购买此升级');
+        return;
+      }
+      
+      const priceIndex = gameState.specialMultiplier - 1;
+      const price = gameState.specialMultiplierPrices[priceIndex];
+      
+      if (gameState.score >= price) {
+        gameState.score -= price;
+        gameState.specialMultiplier++;
+        
+        updateUI();
+        showNotification('success', '特殊倍率升级成功');
+      } else {
+        showNotification('error', '积分不足');
+      }
+    }
+    
+    // 购买道具
+    function buyItem(itemType) {
+      const price = gameState.itemPrices[itemType];
+      
+      if (gameState.score >= price) {
+        gameState.score -= price;
+        gameState.items[itemType]++;
+        
+        updateUI();
+        showNotification('success', `成功购买${getItemName(itemType)}`);
+      } else {
+        showNotification('error', '积分不足');
+      }
+    }
+    
+    // 获取道具名称
+    function getItemName(itemType) {
+      switch(itemType) {
+        case 'loadedDice': return '灌铅骰子';
+        case 'magicDice': return '魔法骰子';
+        case 'mirrorDice': return '镜像骰子';
+        default: return '';
+      }
+    }
+    
+    // 购买皮肤升级
+    function buySkinUpgrade() {
+      if (gameState.maxDiceSkin >= 5) {
+        showNotification('info', '已拥有最高级别的骰子外观');
+        return;
+      }
+      
+      const price = gameState.diceSkinPrices[gameState.maxDiceSkin];
+      
+      if (gameState.score >= price) {
+        gameState.score -= price;
+        gameState.maxDiceSkin++;
+        gameState.diceSkin = gameState.maxDiceSkin; // 自动切换到新皮肤
+        
+        updateDiceSkins();
+        updateUI();
+        showNotification('success', '骰子外观升级成功');
+      } else {
+        showNotification('error', '积分不足');
+      }
+    }
+    
+    // 使用灌铅骰子
+    function useLoadedDice() {
+      if (gameState.items.loadedDice <= 0) {
+        showNotification('info', '没有灌铅骰子可使用');
+        return;
+      }
+      
+      if (gameState.isRolling) {
+        showNotification('info', '请等待当前投掷完成');
+        return;
+      }
+      
+      // 清空之前的选择
+      gameState.selectedDiceIndex = -1;
+      gameState.selectedNumber = -1;
+      
+      // 生成骰子选择
+      elements.diceSelection.innerHTML = '';
+      for (let i = 0; i < gameState.diceCount; i++) {
+        const dice = document.createElement('div');
+        const dataNum = document.querySelector(`[data-number="${i+1}"]`);
+        dice.className = `dice w-16 h-16 rounded-lg bg-dice-${getSkinName(gameState.diceSkin)} dice-shadow flex items-center justify-center text-2xl font-bold text-white relative cursor-pointer transition-transform hover:scale-110`;
+        dice.dataset.index = i;
+        dice.innerHTML = createDiceDots(1); // 默认显示1点
+        
+        dice.addEventListener('click', () => {
+          // 移除之前的选择
+          document.querySelectorAll('#dice-selection .dice').forEach(d => {
+            d.classList.remove('ring-2', 'ring-blue-500');
+          });
+          
+          // 添加当前选择
+          dice.classList.add('ring-2', 'ring-blue-500');
+          gameState.selectedDiceIndex = i;
+
+          // 给选中的骰子添加边框 如果已有边框则删除边框
+          if (dice.style.border) {
+            dice.style.border = '';
+          } else {
+            dice.style.border = '3px solid #0F0';
+          }
+        }
+      );
+        
+        elements.diceSelection.appendChild(dice);
+      }
+      
+      // 重置数字按钮
+      elements.numberBtns.forEach(btn => {
+        btn.classList.remove('bg-blue-600');
+      });
+      
+      // 禁用确认按钮
+      elements.confirmLoadedDice.disabled = true;
+      
+      // 显示模态框
+      elements.loadedDiceModal.classList.remove('hidden');
+    }
+    
+    // 确认使用灌铅骰子
+    function confirmLoadedDice() {
+      if (gameState.selectedDiceIndex === -1 || gameState.selectedNumber === -1) {
+        showNotification('info', '请选择骰子和点数');
+        return;
+      }
+      
+      // 减少道具数量
+      gameState.items.loadedDice--;
+      
+      // 设置使用状态
+      gameState.usingLoadedDice = true;
+      
+      // 隐藏模态框
+      elements.loadedDiceModal.classList.add('hidden');
+      
+      // 更新UI
+      updateUI();
+      
+      // 自动投掷骰子
+      rollDice();
+      
+      showNotification('success', '已选择灌铅骰子，即将投掷');
+    }
+    
+    // 使用魔法骰子
+    function useMagicDice() {
+      if (gameState.items.magicDice <= 0) {
+        showNotification('info', '没有魔法骰子可使用');
+        return;
+      }
+      
+      if (gameState.isRolling) {
+        showNotification('info', '请等待当前投掷完成');
+        return;
+      }
+      
+      if (gameState.diceValues.length === 0) {
+        showNotification('info', '请先投掷骰子');
+        return;
+      }
+      
+      // 清空之前的选择
+      gameState.selectedDiceIndex = -1;
+      gameState.selectedNumber = -1;
+      
+      // 生成已投掷骰子选择
+      elements.rolledDiceSelection.innerHTML = '';
+      for (let i = 0; i < gameState.diceCount; i++) {
+        const value = gameState.diceValues[i];
+        const dice = document.createElement('div');
+        dice.className = `dice w-16 h-16 rounded-lg bg-dice-${getSkinName(gameState.diceSkin)} dice-shadow flex items-center justify-center text-2xl font-bold text-white cursor-pointer transition-transform hover:scale-110`;
+        dice.dataset.index = i;
+        dice.innerHTML = createDiceDots(value);
+        
+        // // 根据点数更新颜色
+        // if (value % 2 === 1) {
+        //   dice.classList.add('text-white');
+        //   dice.classList.remove('text-gray-800');
+        // } else {
+        //   if (gameState.diceSkin === 3) { // 象牙色骰子
+        //     dice.classList.add('text-gray-800');
+        //     dice.classList.remove('text-white');
+        //   } else {
+        //     dice.classList.add('text-white');
+        //     dice.classList.remove('text-gray-800');
+        //   }
+        // }
+        
+        dice.addEventListener('click', () => {
+          // 移除之前的选择
+          document.querySelectorAll('#rolled-dice-selection .dice').forEach(d => {
+            d.classList.remove('ring-2', 'ring-purple-500');
+          });
+          
+          // 添加当前选择
+          dice.classList.add('ring-2', 'ring-purple-500');
+          gameState.selectedDiceIndex = i;
+        });
+        
+        elements.rolledDiceSelection.appendChild(dice);
+      }
+      
+      // 重置数字按钮
+      elements.magicNumberBtns.forEach(btn => {
+        btn.classList.remove('bg-purple-600');
+      });
+      
+      // 禁用确认按钮
+      elements.confirmMagicDice.disabled = true;
+      
+      // 显示模态框
+      elements.magicDiceModal.classList.remove('hidden');
+    }
+    
+    // 确认使用魔法骰子
+    function confirmMagicDice() {
+      if (gameState.selectedDiceIndex === -1 || gameState.selectedNumber === -1) {
+        showNotification('info', '请选择骰子和点数');
+        return;
+      }
+      
+      // 减少道具数量
+      gameState.items.magicDice--;
+      
+      // 更新骰子值
+      const oldValue = gameState.diceValues[gameState.selectedDiceIndex];
+      gameState.diceValues[gameState.selectedDiceIndex] = gameState.selectedNumber;
+      
+      // 更新骰子显示
+      const diceElements = document.querySelectorAll('.dice');
+      const selectedDice = diceElements[gameState.selectedDiceIndex];
+      selectedDice.dataset.value = gameState.selectedNumber;
+      selectedDice.innerHTML = createDiceDots(gameState.selectedNumber);
+      
+      // // 根据点数更新颜色
+      // if (gameState.selectedNumber % 2 === 1) {
+      //   selectedDice.classList.add('text-white');
+      //   selectedDice.classList.remove('text-gray-800');
+      // } else {
+      //   if (gameState.diceSkin === 3) { // 象牙色骰子
+      //     selectedDice.classList.add('text-gray-800');
+      //     selectedDice.classList.remove('text-white');
+      //   } else {
+      //     selectedDice.classList.add('text-white');
+      //     selectedDice.classList.remove('text-gray-800');
+      //   }
+      // }
+      
+      // 更新骰子点颜色类
+      if (gameState.selectedNumber % 2 === 0) {
+        selectedDice.classList.add('dice-even');
+      } else {
+        selectedDice.classList.remove('dice-even');
+      }
+      
+      // 添加动画效果
+      selectedDice.classList.add('animate-spin-dice');
+      setTimeout(() => {
+        selectedDice.classList.remove('animate-spin-dice');
+        
+        // 重新计算得分
+        recalculateScore();
+      }, 1000);
+      
+      // 隐藏模态框
+      elements.magicNumberBtns.classList.add('hidden');
+      
+      // 更新UI
+      updateUI();
+      
+      showNotification('success', '已使用魔法骰子修改点数');
+    }
+    
+    // 使用镜像骰子
+    function useMirrorDice() {
+      if (gameState.items.mirrorDice <= 0) {
+        showNotification('info', '没有镜像骰子可使用');
+        return;
+      }
+      
+      if (gameState.isRolling) {
+        showNotification('info', '请等待当前投掷完成');
+        return;
+      }
+      
+      if (gameState.diceValues.length === 0) {
+        showNotification('info', '请先投掷骰子');
+        return;
+      }
+      
+      if (gameState.diceCount < 2) {
+        showNotification('info', '需要至少2枚骰子才能使用镜像骰子');
+        return;
+      }
+      
+      // 清空之前的选择
+      gameState.selectedSourceDiceIndex = -1;
+      gameState.selectedTargetDiceIndex = -1;
+      
+      // 生成源骰子选择
+      elements.sourceDiceSelection.innerHTML = '';
+      for (let i = 0; i < gameState.diceCount; i++) {
+        const value = gameState.diceValues[i];
+        const dice = document.createElement('div');
+        dice.className = `dice w-16 h-16 rounded-lg bg-dice-${getSkinName(gameState.diceSkin)} dice-shadow flex items-center justify-center text-2xl font-bold text-white cursor-pointer transition-transform hover:scale-110`;
+        dice.dataset.index = i;
+        dice.innerHTML = createDiceDots(value);
+        
+        // // 根据点数更新颜色
+        // if (value % 2 === 1) {
+        //   dice.classList.add('text-white');
+        //   dice.classList.remove('text-gray-800');
+        // } else {
+        //   if (gameState.diceSkin === 3) { // 象牙色骰子
+        //     dice.classList.add('text-gray-800');
+        //     dice.classList.remove('text-white');
+        //   } else {
+        //     dice.classList.add('text-white');
+        //     dice.classList.remove('text-gray-800');
+        //   }
+        // }
+        
+        dice.addEventListener('click', () => {
+          // 移除之前的选择
+          document.querySelectorAll('#source-dice-selection .dice').forEach(d => {
+            d.classList.remove('ring-2', 'ring-green-500');
+          });
+          
+          // 添加当前选择
+          dice.classList.add('ring-2', 'ring-green-500');
+          gameState.selectedSourceDiceIndex = i;
+          
+          // 更新确认按钮状态
+          updateMirrorConfirmButton();
+        });
+        
+        elements.sourceDiceSelection.appendChild(dice);
+      }
+      
+      // 生成目标骰子选择
+      elements.targetDiceSelection.innerHTML = '';
+      for (let i = 0; i < gameState.diceCount; i++) {
+        const value = gameState.diceValues[i];
+        const dice = document.createElement('div');
+        dice.className = `dice w-16 h-16 rounded-lg bg-dice-${getSkinName(gameState.diceSkin)} dice-shadow flex items-center justify-center text-2xl font-bold text-white cursor-pointer transition-transform hover:scale-110`;
+        dice.dataset.index = i;
+        dice.innerHTML = createDiceDots(value);
+        
+        // // 根据点数更新颜色
+        // if (value % 2 === 1) {
+        //   dice.classList.add('text-white');
+        //   dice.classList.remove('text-gray-800');
+        // } else {
+        //   if (gameState.diceSkin === 3) { // 象牙色骰子
+        //     dice.classList.add('text-gray-800');
+        //     dice.classList.remove('text-white');
+        //   } else {
+        //     dice.classList.add('text-white');
+        //     dice.classList.remove('text-gray-800');
+        //   }
+        // }
+        
+        dice.addEventListener('click', () => {
+          // 移除之前的选择
+          document.querySelectorAll('#target-dice-selection .dice').forEach(d => {
+            d.classList.remove('ring-2', 'ring-green-500');
+          });
+          
+          // 添加当前选择
+          dice.classList.add('ring-2', 'ring-green-500');
+          gameState.selectedTargetDiceIndex = i;
+          
+          // 更新确认按钮状态
+          updateMirrorConfirmButton();
+        });
+        
+        elements.targetDiceSelection.appendChild(dice);
+      }
+      
+      // 禁用确认按钮
+      elements.confirmMirrorDice.disabled = true;
+      
+      // 显示模态框
+      elements.mirrorDiceModal.classList.remove('hidden');
+    }
+    
+    // 更新镜像骰子确认按钮状态
+    function updateMirrorConfirmButton() {
+      elements.confirmMirrorDice.disabled = !(
+        gameState.selectedSourceDiceIndex !== -1 && 
+        gameState.selectedTargetDiceIndex !== -1 && 
+        gameState.selectedSourceDiceIndex !== gameState.selectedTargetDiceIndex
+      );
+    }
+    
+    // 确认使用镜像骰子
+    function confirmMirrorDice() {
+      if (gameState.selectedSourceDiceIndex === -1 || gameState.selectedTargetDiceIndex === -1) {
+        showNotification('info', '请选择源骰子和目标骰子');
+        return;
+      }
+      
+      if (gameState.selectedSourceDiceIndex === gameState.selectedTargetDiceIndex) {
+        showNotification('info', '源骰子和目标骰子不能是同一个');
+        return;
+      }
+      
+      // 减少道具数量
+      gameState.items.mirrorDice--;
+      
+      // 更新骰子值
+      const sourceValue = gameState.diceValues[gameState.selectedSourceDiceIndex];
+      gameState.diceValues[gameState.selectedTargetDiceIndex] = sourceValue;
+      
+      // 更新骰子显示
+      const diceElements = document.querySelectorAll('.dice');
+      const targetDice = diceElements[gameState.selectedTargetDiceIndex];
+      targetDice.dataset.value = sourceValue;
+      targetDice.innerHTML = createDiceDots(sourceValue);
+      
+      // // 根据点数更新颜色
+      // if (sourceValue % 2 === 1) {
+      //   targetDice.classList.add('text-white');
+      //   targetDice.classList.remove('text-gray-800');
+      // } else {
+      //   if (gameState.diceSkin === 3) { // 象牙色骰子
+      //     targetDice.classList.add('text-gray-800');
+      //     targetDice.classList.remove('text-white');
+      //   } else {
+      //     targetDice.classList.add('text-white');
+      //     targetDice.classList.remove('text-gray-800');
+      //   }
+      // }
+      
+      // 更新骰子点颜色类
+      if (sourceValue % 2 === 0) {
+        targetDice.classList.add('dice-even');
+      } else {
+        targetDice.classList.remove('dice-even');
+      }
+      
+      // 添加动画效果
+      targetDice.classList.add('animate-spin-dice');
+      setTimeout(() => {
+        targetDice.classList.remove('animate-spin-dice');
+        
+        // 重新计算得分
+        recalculateScore();
+      }, 1000);
+      
+      // 隐藏模态框
+      elements.mirrorDiceModal.classList.add('hidden');
+      
+      // 更新UI
+      updateUI();
+      
+      showNotification('success', '已使用镜像骰子复制点数');
+    }
+    
+    // 重新计算得分
+    function recalculateScore() {
+      // 隐藏之前的得分和组合消息
+      elements.rollScore.classList.add('hidden');
+      elements.combinationMessage.classList.add('hidden');
+      
+      let score = 0;
+      let combination = null;
+      
+      // 基础得分（1和6点）
+      gameState.diceValues.forEach(value => {
+        if (value === 1 || value === 6) {
+          score += value * gameState.baseMultiplier;
+        }
+      });
+      
+      // 特殊组合得分
+      if (gameState.diceCount >= 2) {
+        combination = checkCombinations();
+        
+        if (combination) {
+          score += combination.score * gameState.specialMultiplier;
+        }
+      }
+      
+      // 更新总分
+      gameState.score += score;
+      
+      // 更新UI
+      elements.totalScore.textContent = gameState.score;
+      elements.rollScore.querySelector('span').textContent = score;
+      elements.rollScore.classList.remove('hidden');
+      
+      // 显示特殊组合消息
+      if (combination) {
+        elements.combinationType.textContent = combination.name;
+        elements.combinationMessage.classList.remove('hidden');
+        
+        // 添加特殊效果
+        createParticles();
+      }
+      
+      // 保存游戏状态
+      saveGame();
+    }
+    
+    // 创建粒子效果
+    function createParticles() {
+      const container = document.querySelector('.container');
+      
+      for (let i = 0; i < 50; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        // 随机大小
+        const size = Math.random() * 6 + 2;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        
+        // 随机颜色
+        const colors = ['#3b82f6', '#ef4444', '#22c55e', '#eab308', '#8b5cf6'];
+        particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        // 随机位置（基于组合消息的位置）
+        const messageRect = elements.combinationMessage.getBoundingClientRect();
+        const x = messageRect.left + Math.random() * messageRect.width;
+        const y = messageRect.top + Math.random() * messageRect.height;
+        
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+        
+        // 添加到容器
+        container.appendChild(particle);
+        
+        // 动画
+        const duration = Math.random() * 1 + 0.5;
+        const xMovement = (Math.random() - 0.5) * 50;
+        const yMovement = (Math.random() - 0.5) * 50 - 50;
+        
+        gsap.to(particle, {
+          x: `+=${xMovement}`,
+          y: `+=${yMovement}`,
+          opacity: 0,
+          duration: duration,
+          ease: 'power1.out',
+          onComplete: () => {
+            particle.remove();
+          }
+        });
+      }
+    }
+    
+    // 显示通知
+    function showNotification(type, message) {
+      // 设置图标
+      switch(type) {
+        case 'success':
+          elements.notificationIcon.className = 'fa fa-check-circle mr-2 text-green-400';
+          break;
+        case 'error':
+          elements.notificationIcon.className = 'fa fa-times-circle mr-2 text-red-400';
+          break;
+        case 'info':
+          elements.notificationIcon.className = 'fa fa-info-circle mr-2 text-blue-400';
+          break;
+      }
+      
+      // 设置消息
+      elements.notificationMessage.textContent = message;
+      
+      // 显示通知
+      elements.notification.classList.remove('translate-y-20', 'opacity-0');
+      
+      // 3秒后隐藏
+      setTimeout(() => {
+        elements.notification.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+    
+    // 保存游戏状态
+    function saveGame() {
+      localStorage.setItem('diceGameState', JSON.stringify(gameState));
+    }
+    
+    // 加载游戏状态
+    function loadGame() {
+      const savedState = localStorage.getItem('diceGameState');
+      
+      if (savedState) {
+        const parsedState = JSON.parse(savedState);
+        
+        // 更新游戏状态
+        Object.assign(gameState, parsedState);
+        
+        // 兼容性处理：如果加载的状态中没有maxDiceSkin属性，将其设置为与diceSkin相同的值
+        if (typeof gameState.maxDiceSkin === 'undefined') {
+          gameState.maxDiceSkin = gameState.diceSkin;
+        }
+        
+        // 确保重置滚动状态，防止按钮被永久禁用
+        gameState.isRolling = false;
+        elements.rollButton.disabled = false;
+        elements.rollButton.classList.remove('opacity-50');
+        
+        // 更新UI
+        updateUI();
+        createDice();
+        
+        showNotification('success', '已加载保存的游戏');
+      }
+    }
+    
+    // 更新UI
+    function updateUI() {
+      // 更新总分
+      elements.totalScore.textContent = gameState.score;
+      
+      // 更新骰子数量
+      elements.diceCount.textContent = gameState.diceCount;
+      elements.ownedDice.textContent = gameState.diceCount;
+      
+      // 更新倍率
+      elements.currentMultiplier.textContent = `${gameState.baseMultiplier}x`;
+      elements.baseMultiplierLevel.textContent = gameState.baseMultiplier;
+      elements.specialMultiplierLevel.textContent = gameState.specialMultiplier;
+      
+      // 更新价格
+      if (gameState.diceCount < gameState.maxDiceCount) {
+        const dicePriceIndex = gameState.diceCount - 1;
+        elements.dicePrice.textContent = gameState.dicePrices[dicePriceIndex];
+      }
+      
+      if (gameState.baseMultiplier < gameState.maxBaseMultiplier) {
+        const baseMultiplierPriceIndex = gameState.baseMultiplier - 1;
+        elements.baseMultiplierPrice.textContent = gameState.baseMultiplierPrices[baseMultiplierPriceIndex];
+      }
+      
+      if (gameState.specialMultiplier < gameState.maxSpecialMultiplier) {
+        const specialMultiplierPriceIndex = gameState.specialMultiplier - 1;
+        elements.specialMultiplierPrice.textContent = gameState.specialMultiplierPrices[specialMultiplierPriceIndex];
+      }
+      
+      // 更新道具数量
+      elements.loadedDiceCount.textContent = gameState.items.loadedDice;
+      elements.magicDiceCount.textContent = gameState.items.magicDice;
+      elements.mirrorDiceCount.textContent = gameState.items.mirrorDice;
+      
+      // 更新皮肤信息
+      elements.currentSkinName.textContent = gameState.skinNames[gameState.diceSkin];
+      
+      if (gameState.maxDiceSkin < 5) {
+        elements.nextSkinName.textContent = gameState.skinNames[gameState.maxDiceSkin + 1];
+        elements.nextSkinPrice.textContent = gameState.diceSkinPrices[gameState.maxDiceSkin];
+        elements.upgradeSkinName.textContent = gameState.skinNames[gameState.maxDiceSkin + 1];
+        elements.skinUpgradePrice.textContent = gameState.diceSkinPrices[gameState.maxDiceSkin];
+      } else {
+        elements.nextSkinName.textContent = '无';
+        elements.nextSkinPrice.textContent = '0';
+        elements.upgradeSkinName.textContent = '无';
+        elements.skinUpgradePrice.textContent = '0';
+      }
+      
+      // 更新按钮状态
+      elements.buyDice.disabled = gameState.diceCount >= gameState.maxDiceCount;
+      elements.buyBaseMultiplier.disabled = gameState.baseMultiplier >= gameState.maxBaseMultiplier;
+      elements.buySpecialMultiplier.disabled = gameState.specialMultiplier >= gameState.maxSpecialMultiplier || gameState.diceCount < 2;
+      elements.buySkinUpgrade.disabled = gameState.maxDiceSkin >= 5;
+      
+      // 更新道具按钮状态
+      elements.useLoadedDice.disabled = gameState.items.loadedDice <= 0;
+      elements.useMagicDice.disabled = gameState.items.magicDice <= 0;
+      elements.useMirrorDice.disabled = gameState.items.mirrorDice <= 0;
+      
+      // 如果按钮禁用，添加样式
+      if (elements.buyDice.disabled) {
+        elements.buyDice.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        elements.buyDice.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+      
+      if (elements.buyBaseMultiplier.disabled) {
+        elements.buyBaseMultiplier.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        elements.buyBaseMultiplier.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+      
+      if (elements.buySpecialMultiplier.disabled) {
+        elements.buySpecialMultiplier.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        elements.buySpecialMultiplier.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+      
+      if (elements.buySkinUpgrade.disabled) {
+        elements.buySkinUpgrade.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        elements.buySkinUpgrade.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+      
+      if (elements.useLoadedDice.disabled) {
+        elements.useLoadedDice.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        elements.useLoadedDice.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+      
+      if (elements.useMagicDice.disabled) {
+        elements.useMagicDice.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        elements.useMagicDice.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+      
+      if (elements.useMirrorDice.disabled) {
+        elements.useMirrorDice.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        elements.useMirrorDice.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+    
+    // 初始化游戏
+    window.addEventListener('DOMContentLoaded', () => {
+      initGame();
+      loadGame();
+    });
+  </script>
+</body>
+</html>
